@@ -18,11 +18,16 @@ interface RechargeModalProps {
   visible: boolean;
   onClose: () => void;
   onConfirm: (amount: number, method: string) => void;
+  initialAmount?: number | null;
 }
 
-export function RechargeModal({ visible, onClose, onConfirm }: RechargeModalProps) {
-  const [amount, setAmount] = useState<number | null>(null);
+export function RechargeModal({ visible, onClose, onConfirm, initialAmount }: RechargeModalProps) {
+  const [amount, setAmount] = useState<number | null>(initialAmount ?? null);
   const [method, setMethod] = useState<string>("wave");
+
+  useEffect(() => {
+    if (visible) setAmount(initialAmount ?? null);
+  }, [visible, initialAmount]);
 
   function handleConfirm() {
     if (!amount) return;

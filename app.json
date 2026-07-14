@@ -24,7 +24,14 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Go Goree a besoin d'accéder à vos photos pour envoyer vos documents.",
+          "cameraPermission": "Go Goree a besoin d'accéder à votre caméra pour photographier vos documents."
+        }
+      ]
     ]
   }
 }

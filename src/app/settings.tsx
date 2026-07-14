@@ -13,7 +13,7 @@ function SectionLabel({ children }: { children: string }) {
         fontSize: 13,
         fontWeight: "700",
         color: colors.textGray,
-        marginBottom: 4,
+        marginBottom: 10,
         marginTop: 20,
       }}
     >
@@ -22,14 +22,35 @@ function SectionLabel({ children }: { children: string }) {
   );
 }
 
+function Card({ children }: { children: React.ReactNode }) {
+  return (
+    <View
+      style={{
+        backgroundColor: colors.white,
+        borderRadius: 16,
+        paddingHorizontal: 16,
+        shadowColor: "#000",
+        shadowOpacity: 0.06,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 3 },
+        elevation: 2,
+      }}
+    >
+      {children}
+    </View>
+  );
+}
+
 function ToggleRow({
   label,
   value,
   onValueChange,
+  last,
 }: {
   label: string;
   value: boolean;
   onValueChange: (value: boolean) => void;
+  last?: boolean;
 }) {
   return (
     <View
@@ -37,7 +58,7 @@ function ToggleRow({
         flexDirection: "row",
         alignItems: "center",
         paddingVertical: 14,
-        borderBottomWidth: 1,
+        borderBottomWidth: last ? 0 : 1,
         borderBottomColor: colors.border,
       }}
     >
@@ -52,14 +73,14 @@ function ToggleRow({
   );
 }
 
-function LinkRow({ label, value }: { label: string; value?: string }) {
+function LinkRow({ label, value, last }: { label: string; value?: string; last?: boolean }) {
   return (
     <Pressable
       style={{
         flexDirection: "row",
         alignItems: "center",
         paddingVertical: 14,
-        borderBottomWidth: 1,
+        borderBottomWidth: last ? 0 : 1,
         borderBottomColor: colors.border,
       }}
     >
@@ -74,10 +95,10 @@ function LinkRow({ label, value }: { label: string; value?: string }) {
 
 export default function SettingsScreen() {
   const [pushEnabled, setPushEnabled] = useState(true);
-  const [emailEnabled, setEmailEnabled] = useState(false);
+  const [biometricsEnabled, setBiometricsEnabled] = useState(true);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.white }} edges={["top", "bottom"]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.inputBg }} edges={["top", "bottom"]}>
       <View
         style={{
           flexDirection: "row",
@@ -85,40 +106,51 @@ export default function SettingsScreen() {
           paddingHorizontal: 20,
           paddingTop: 8,
           paddingBottom: 4,
+          backgroundColor: colors.inputBg,
         }}
       >
         <Pressable onPress={() => router.canGoBack() && router.back()} hitSlop={12}>
           <Ionicons name="chevron-back" size={26} color={colors.textDark} />
         </Pressable>
         <Text style={{ fontSize: 18, fontWeight: "700", color: colors.textDark, marginLeft: 12 }}>
-          Réglages
+          Paramètres
         </Text>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}>
-        <SectionLabel>NOTIFICATIONS</SectionLabel>
-        <ToggleRow label="Notifications push" value={pushEnabled} onValueChange={setPushEnabled} />
-        <ToggleRow label="Notifications par email" value={emailEnabled} onValueChange={setEmailEnabled} />
+        <SectionLabel>SÉCURITÉ</SectionLabel>
+        <Card>
+          <ToggleRow label="Notifications push" value={pushEnabled} onValueChange={setPushEnabled} />
+          <ToggleRow
+            label="Biométrie / Face ID"
+            value={biometricsEnabled}
+            onValueChange={setBiometricsEnabled}
+            last
+          />
+        </Card>
 
         <SectionLabel>PRÉFÉRENCES</SectionLabel>
-        <LinkRow label="Langue" value="Français" />
-        <LinkRow label="Devise" value="FCFA" />
+        <Card>
+          <LinkRow label="Langue de l'app" value="Français" />
+          <LinkRow label="Thème" value="Clair" last />
+        </Card>
 
-        <SectionLabel>À PROPOS</SectionLabel>
-        <LinkRow label="Aide & support" />
-        <LinkRow label="Conditions d'utilisation" />
-        <LinkRow label="Politique de confidentialité" />
-
-        <Text
-          style={{
-            fontSize: 12,
-            color: colors.textGray,
-            textAlign: "center",
-            marginTop: 32,
-          }}
-        >
-          {APP_NAME} • v1.0.0
-        </Text>
+        <View style={{ alignItems: "center", marginTop: 32 }}>
+          <Text style={{ fontSize: 12, color: colors.textGray }}>
+            © {APP_NAME.toUpperCase()} v1.0.0
+          </Text>
+          <Pressable style={{ marginTop: 6 }}>
+            <Text
+              style={{
+                fontSize: 12,
+                color: colors.textGray,
+                textDecorationLine: "underline",
+              }}
+            >
+              Conditions Générales d'Utilisation
+            </Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

@@ -1,12 +1,11 @@
-import { View, Text, Pressable, ScrollView } from "react-native";
+import { useState } from "react";
+import { View, Text, Pressable, ScrollView, Switch } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { colors } from "@/constants/theme";
+import { colors, gradients } from "@/constants/theme";
 import { useAuth } from "@/hooks/useAuth";
-import { useTickets } from "@/hooks/useTickets";
-import { useWallet } from "@/hooks/useWallet";
-import { formatFcfa } from "@/constants/trip";
 
 function initials(name: string) {
   return name
@@ -17,18 +16,18 @@ function initials(name: string) {
     .slice(0, 2);
 }
 
-function MenuRow({
+function ProfileRow({
   icon,
-  iconColor,
-  iconBg,
   label,
+  value,
   onPress,
+  right,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
-  iconColor: string;
-  iconBg: string;
   label: string;
-  onPress: () => void;
+  value?: string;
+  onPress?: () => void;
+  right?: React.ReactNode;
 }) {
   return (
     <Pressable
@@ -36,9 +35,15 @@ function MenuRow({
       style={{
         flexDirection: "row",
         alignItems: "center",
-        paddingVertical: 14,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
+        backgroundColor: colors.white,
+        borderRadius: 16,
+        padding: 14,
+        marginBottom: 12,
+        shadowColor: "#000",
+        shadowOpacity: 0.06,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 3 },
+        elevation: 2,
       }}
     >
       <View
@@ -46,26 +51,34 @@ function MenuRow({
           width: 38,
           height: 38,
           borderRadius: 12,
-          backgroundColor: iconBg,
+          backgroundColor: colors.primaryTint,
           alignItems: "center",
           justifyContent: "center",
           marginRight: 14,
         }}
       >
-        <Ionicons name={icon} size={18} color={iconColor} />
+        <Ionicons name={icon} size={18} color={colors.primary} />
       </View>
       <Text style={{ flex: 1, fontSize: 15, fontWeight: "600", color: colors.textDark }}>
         {label}
       </Text>
-      <Ionicons name="chevron-forward" size={18} color={colors.textGray} />
+      {right ? (
+        right
+      ) : (
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          {value ? (
+            <Text style={{ fontSize: 14, color: colors.textGray, marginRight: 6 }}>{value}</Text>
+          ) : null}
+          <Ionicons name="chevron-forward" size={18} color={colors.textGray} />
+        </View>
+      )}
     </Pressable>
   );
 }
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
-  const { tickets } = useTickets();
-  const { balance } = useWallet();
+  const [darkMode, setDarkMode] = useState(false);
 
   async function handleLogout() {
     await logout();
@@ -76,12 +89,14 @@ export default function ProfileScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.white }} edges={["top", "bottom"]}>
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
         <View style={{ alignItems: "center", marginBottom: 24 }}>
-          <View
+          <LinearGradient
+            colors={gradients.primary}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={{
               width: 88,
               height: 88,
               borderRadius: 44,
-              backgroundColor: colors.primary,
               alignItems: "center",
               justifyContent: "center",
               marginBottom: 12,
@@ -90,79 +105,78 @@ export default function ProfileScreen() {
             <Text style={{ fontSize: 28, fontWeight: "800", color: colors.white }}>
               {user ? initials(user.name) : "?"}
             </Text>
-          </View>
+          </LinearGradient>
           <Text style={{ fontSize: 18, fontWeight: "800", color: colors.textDark }}>
             {user?.name ?? "Utilisateur"}
           </Text>
+          {user?.phone ? (
+            <Text style={{ fontSize: 13, color: colors.textGray, marginTop: 4 }}>
+              {user.phone}
+            </Text>
+          ) : null}
           <Text style={{ fontSize: 13, color: colors.textGray, marginTop: 2 }}>
             {user?.email ?? ""}
           </Text>
         </View>
 
-        <View
+        <ProfileRow
+          icon="person-outline"
+          label="Demande carte résident"
+          onPress={() => router.push("/demande-carte-resident")}
+        />
+        <ProfileRow icon="create-outline" label="Modifier le profil" />
+        <ProfileRow icon="lock-closed-outline" label="Changer mot de passe" />
+        <ProfileRow
+          icon="globe-outline"
+          label="Langue"
+          value="Français"
+          onPress={() => router.push("/settings")}
+        />
+        <ProfileRow
+          icon="moon-outline"
+          label="Mode sombre"
+          right={
+            <Switch
+              value={darkMode}
+              onValueChange={setDarkMode}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={colors.white}
+            />
+          }
+        />
+        <ProfileRow icon="help-circle-outline" label="Centre d'aide" />
+
+        <Text
           style={{
-            flexDirection: "row",
-            backgroundColor: colors.inputBg,
-            borderRadius: 18,
-            padding: 16,
-            marginBottom: 28,
+            fontSize: 13,
+            fontWeight: "700",
+            color: colors.textGray,
+            marginTop: 12,
+            marginBottom: 4,
           }}
         >
-          <View style={{ flex: 1, alignItems: "center" }}>
-            <Text style={{ fontSize: 20, fontWeight: "800", color: colors.textDark }}>
-              {tickets.length}
-            </Text>
-            <Text style={{ fontSize: 12, color: colors.textGray, marginTop: 2 }}>
-              Billet{tickets.length > 1 ? "s" : ""}
-            </Text>
-          </View>
-          <View style={{ width: 1, backgroundColor: colors.border }} />
-          <View style={{ flex: 1, alignItems: "center" }}>
-            <Text style={{ fontSize: 20, fontWeight: "800", color: colors.textDark }}>
-              {formatFcfa(balance)}
-            </Text>
-            <Text style={{ fontSize: 12, color: colors.textGray, marginTop: 2 }}>
-              Solde wallet
-            </Text>
-          </View>
-        </View>
-
-        <Text style={{ fontSize: 13, fontWeight: "700", color: colors.textGray, marginBottom: 4 }}>
           COMPTE
         </Text>
-        <MenuRow
+        <ProfileRow
           icon="notifications-outline"
-          iconColor={colors.primary}
-          iconBg={colors.primaryTint}
           label="Notifications"
           onPress={() => router.push("/notifications")}
         />
-        <MenuRow
+        <ProfileRow
           icon="settings-outline"
-          iconColor={colors.primary}
-          iconBg={colors.primaryTint}
-          label="Réglages"
+          label="Paramètres"
           onPress={() => router.push("/settings")}
         />
-        <MenuRow
+        <ProfileRow
           icon="ticket-outline"
-          iconColor={colors.primary}
-          iconBg={colors.primaryTint}
           label="Mes billets"
           onPress={() => router.push("/(tabs)/tickets")}
-        />
-        <MenuRow
-          icon="wallet-outline"
-          iconColor={colors.primary}
-          iconBg={colors.primaryTint}
-          label="Wallet"
-          onPress={() => router.push("/(tabs)/wallet")}
         />
 
         <Pressable
           onPress={handleLogout}
           style={{
-            marginTop: 32,
+            marginTop: 8,
             height: 52,
             borderRadius: 14,
             borderWidth: 1.5,

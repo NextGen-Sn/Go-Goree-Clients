@@ -6,8 +6,9 @@ import { User } from "@/types";
 
 const mockUser: User = {
   id: "mock-user",
-  name: "Boubacar",
+  name: "Boubacar Diallo",
   email: "boubacar@example.com",
+  phone: "+221 77 123 45 67",
 };
 
 interface AuthContextValue {
