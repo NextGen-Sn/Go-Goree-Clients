@@ -1,278 +1,164 @@
-import { useState } from "react";
-import { View, Text, Pressable, ScrollView } from "react-native";
+import { View, Text, Pressable, FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { colors, gradients } from "@/constants/theme";
-import { Stepper } from "@/components/ui/Stepper";
-import { TripPickerModal } from "@/components/TripPickerModal";
-import {
-  ROUTE,
-  ADULT_PRICE,
-  CHILD_PRICE,
-  FOREIGNER_PRICE,
-  formatFcfa,
-  TripDate,
-} from "@/constants/trip";
+import { useTickets } from "@/hooks/useTickets";
+import { formatFcfa } from "@/constants/trip";
+import { Ticket } from "@/types";
 
-const DEFAULT_SEATS = 150;
+const STATUS_STYLES: Record<Ticket["status"], { bg: string; text: string }> = {
+  valide: { bg: "#DCFCE7", text: "#16A34A" },
+  "utilisé": { bg: colors.inputBg, text: colors.textGray },
+  "expiré": { bg: "#FEE2E2", text: "#DC2626" },
+};
 
-export default function TicketsScreen() {
-  const [adults, setAdults] = useState(1);
-  const [children, setChildren] = useState(0);
-  const [foreigners, setForeigners] = useState(0);
-  const [pickerVisible, setPickerVisible] = useState(false);
-  const [trip, setTrip] = useState<{ date: TripDate; time: string } | null>(null);
-
-  const total = adults * ADULT_PRICE + children * CHILD_PRICE + foreigners * FOREIGNER_PRICE;
-  const passengers = adults + children + foreigners;
-  const seatsAvailable = trip?.date.seatsAvailable ?? DEFAULT_SEATS;
-
-  function handleConfirmTrip(selection: { date: TripDate; time: string }) {
-    setTrip(selection);
-    setPickerVisible(false);
-  }
-
-  function handlePay() {
-    if (!trip) {
-      setPickerVisible(true);
-      return;
-    }
-    router.push({
-      pathname: "/ticket/payment",
-      params: {
-        adults: String(adults),
-        children: String(children),
-        foreigners: String(foreigners),
-        total: String(total),
-        date: `${trip.date.label} • ${trip.time}`,
-      },
-    });
-  }
+function TicketCard({ ticket }: { ticket: Ticket }) {
+  const statusStyle = STATUS_STYLES[ticket.status];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.white }} edges={["top", "bottom"]}>
+    <Pressable
+      onPress={() => router.push(`/ticket/${ticket.id}`)}
+      style={{
+        backgroundColor: colors.white,
+        borderRadius: 18,
+        padding: 16,
+        marginBottom: 14,
+        shadowColor: "#000",
+        shadowOpacity: 0.06,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 3 },
+        elevation: 2,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginBottom: 10,
+        }}
+      >
+        <View style={{ flex: 1, marginRight: 12 }}>
+          <Text style={{ fontSize: 15, fontWeight: "700", color: colors.textDark }}>
+            {ticket.departure} ↔ {ticket.destination}
+          </Text>
+          <Text style={{ fontSize: 13, color: colors.textGray, marginTop: 2 }}>
+            {ticket.dateLabel} • {ticket.passengersLabel}
+          </Text>
+        </View>
+        <View
+          style={{
+            backgroundColor: statusStyle.bg,
+            paddingHorizontal: 10,
+            paddingVertical: 4,
+            borderRadius: 10,
+          }}
+        >
+          <Text style={{ fontSize: 11, fontWeight: "700", color: statusStyle.text }}>
+            {ticket.status}
+          </Text>
+        </View>
+      </View>
+
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
-          paddingHorizontal: 20,
-          paddingTop: 8,
-          paddingBottom: 4,
+          justifyContent: "space-between",
+          paddingTop: 12,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
         }}
       >
-        <Pressable onPress={() => router.canGoBack() && router.back()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={26} color={colors.textDark} />
-        </Pressable>
-        <Text style={{ fontSize: 18, fontWeight: "700", color: colors.textDark, marginLeft: 12 }}>
-          Acheter un billet (Aller-Retour)
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Ionicons name="qr-code-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
+          <Text style={{ fontSize: 12, color: colors.primary, fontWeight: "600" }}>
+            Voir le QR code
+          </Text>
+        </View>
+        <Text style={{ fontSize: 14, fontWeight: "800", color: colors.textDark }}>
+          {formatFcfa(ticket.total)}
         </Text>
       </View>
-
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
-        <View style={{ flexDirection: "row", marginBottom: 24 }}>
-          <View style={{ flex: 1, marginRight: 12 }}>
-            <Text style={styles.label}>Départ</Text>
-            <View style={styles.field}>
-              <View
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: colors.primary,
-                  marginRight: 8,
-                }}
-              />
-              <Text style={styles.fieldText}>{ROUTE.departure}</Text>
-            </View>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.label}>Destination</Text>
-            <View style={styles.field}>
-              <View
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: colors.primaryLight,
-                  marginRight: 8,
-                }}
-              />
-              <Text style={styles.fieldText}>{ROUTE.destination}</Text>
-            </View>
-          </View>
-        </View>
-
-        <Text style={styles.label}>Voyage</Text>
-        <Pressable
-          onPress={() => setPickerVisible(true)}
-          style={[
-            styles.field,
-            {
-              marginBottom: 24,
-              justifyContent: "space-between",
-              backgroundColor: trip ? colors.inputBg : "#EFF4FF",
-              borderWidth: trip ? 0 : 1,
-              borderColor: colors.primary,
-            },
-          ]}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Ionicons
-              name="calendar-outline"
-              size={18}
-              color={trip ? colors.textGray : colors.primary}
-              style={{ marginRight: 10 }}
-            />
-            <Text
-              style={[
-                styles.fieldText,
-                !trip && { color: colors.primary },
-              ]}
-            >
-              {trip ? `${trip.date.label} • ${trip.time}` : "Choisir le voyage"}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={16} color={trip ? colors.textGray : colors.primary} />
-        </Pressable>
-
-        <Text style={[styles.label, { marginBottom: 12 }]}>Passagers</Text>
-
-        <View style={{ marginBottom: 24 }}>
-          <View style={[styles.passengerCard, { marginBottom: 12 }]}>
-            <View style={styles.passengerIcon}>
-              <Ionicons name="happy-outline" size={20} color={colors.primary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.passengerLabel}>Enfant</Text>
-              <Text style={styles.passengerPrice}>{formatFcfa(CHILD_PRICE)}</Text>
-            </View>
-            <Stepper value={children} onChange={setChildren} min={0} />
-          </View>
-
-          <View style={[styles.passengerCard, { marginBottom: 12 }]}>
-            <View style={styles.passengerIcon}>
-              <Ionicons name="person-outline" size={20} color={colors.primary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.passengerLabel}>Adulte résident</Text>
-              <Text style={styles.passengerPrice}>{formatFcfa(ADULT_PRICE)}</Text>
-            </View>
-            <Stepper value={adults} onChange={setAdults} min={1} />
-          </View>
-
-          <View style={styles.passengerCard}>
-            <View style={styles.passengerIcon}>
-              <Ionicons name="globe-outline" size={20} color={colors.primary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.passengerLabel}>Étranger</Text>
-              <Text style={styles.passengerPrice}>{formatFcfa(FOREIGNER_PRICE)}</Text>
-            </View>
-            <Stepper value={foreigners} onChange={setForeigners} min={0} />
-          </View>
-        </View>
-
-        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 32 }}>
-          <View
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: 4,
-              backgroundColor: "#22C55E",
-              marginRight: 6,
-            }}
-          />
-          <Text style={{ fontSize: 13, color: colors.textGray }}>
-            {seatsAvailable} places disponibles
-          </Text>
-        </View>
-
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 16,
-          }}
-        >
-          <Text style={{ fontSize: 14, color: colors.textGray }}>
-            {passengers} passager{passengers > 1 ? "s" : ""}
-          </Text>
-          <Text style={{ fontSize: 18, fontWeight: "800", color: colors.textDark }}>
-            {formatFcfa(total)}
-          </Text>
-        </View>
-
-        <Pressable onPress={handlePay}>
-          <LinearGradient
-            colors={gradients.primary}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={{ height: 54, borderRadius: 14, alignItems: "center", justifyContent: "center" }}
-          >
-            <Text style={{ fontSize: 16, fontWeight: "700", color: colors.white }}>
-              {trip ? `Payer ${formatFcfa(total)}` : "Choisir le voyage pour continuer"}
-            </Text>
-          </LinearGradient>
-        </Pressable>
-      </ScrollView>
-
-      <TripPickerModal
-        visible={pickerVisible}
-        onClose={() => setPickerVisible(false)}
-        onConfirm={handleConfirmTrip}
-      />
-    </SafeAreaView>
+    </Pressable>
   );
 }
 
-const styles = {
-  label: {
-    fontSize: 13,
-    fontWeight: "600" as const,
-    color: colors.textGray,
-    marginBottom: 6,
-  },
-  field: {
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    backgroundColor: colors.inputBg,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    height: 48,
-  },
-  fieldText: {
-    fontSize: 14,
-    fontWeight: "600" as const,
-    color: colors.textDark,
-  },
-  passengerCard: {
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    backgroundColor: colors.inputBg,
-    borderRadius: 16,
-    padding: 12,
-  },
-  passengerIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    backgroundColor: colors.white,
-    alignItems: "center" as const,
-    justifyContent: "center" as const,
-    marginRight: 12,
-  },
-  passengerLabel: {
-    fontSize: 14,
-    fontWeight: "700" as const,
-    color: colors.textDark,
-  },
-  passengerPrice: {
-    fontSize: 13,
-    fontWeight: "600" as const,
-    color: colors.primary,
-    marginTop: 1,
-  },
-};
+export default function TicketsScreen() {
+  const { tickets } = useTickets();
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.white }} edges={["top", "bottom"]}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 }}>
+        <Text style={{ fontSize: 22, fontWeight: "800", color: colors.textDark }}>
+          Mes billets
+        </Text>
+      </View>
+
+      {tickets.length === 0 ? (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+          <View
+            style={{
+              width: 96,
+              height: 96,
+              borderRadius: 48,
+              backgroundColor: "#EFF4FF",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 20,
+            }}
+          >
+            <Ionicons name="ticket-outline" size={44} color={colors.primary} />
+          </View>
+          <Text style={{ fontSize: 17, fontWeight: "700", color: colors.textDark, marginBottom: 8 }}>
+            Aucun billet pour l'instant
+          </Text>
+          <Text style={{ fontSize: 14, color: colors.textGray, textAlign: "center", marginBottom: 28 }}>
+            Réservez votre traversée Dakar ↔ Île de Gorée et retrouvez vos billets ici.
+          </Text>
+          <Pressable onPress={() => router.push("/ticket/new")} style={{ width: "100%" }}>
+            <LinearGradient
+              colors={gradients.primary}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{ height: 54, borderRadius: 14, alignItems: "center", justifyContent: "center" }}
+            >
+              <Text style={{ fontSize: 16, fontWeight: "700", color: colors.white }}>
+                Acheter un billet
+              </Text>
+            </LinearGradient>
+          </Pressable>
+        </View>
+      ) : (
+        <FlatList
+          data={tickets}
+          keyExtractor={(t) => t.id}
+          contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+          renderItem={({ item }) => <TicketCard ticket={item} />}
+          ListFooterComponent={
+            <Pressable onPress={() => router.push("/ticket/new")} style={{ marginTop: 4 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 1.5,
+                  borderColor: colors.primary,
+                  borderRadius: 14,
+                  height: 54,
+                }}
+              >
+                <Ionicons name="add" size={18} color={colors.primary} style={{ marginRight: 6 }} />
+                <Text style={{ fontSize: 15, fontWeight: "700", color: colors.primary }}>
+                  Acheter un nouveau billet
+                </Text>
+              </View>
+            </Pressable>
+          }
+        />
+      )}
+    </SafeAreaView>
+  );
+}

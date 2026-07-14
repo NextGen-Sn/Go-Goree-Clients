@@ -1,14 +1,31 @@
-import { View, Text, Pressable } from "react-native";
+import { useEffect, useRef } from "react";
+import { View, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { colors } from "@/constants/theme";
 import { PillButton } from "@/components/ui/PillButton";
 import { ROUTE, formatFcfa } from "@/constants/trip";
+import { useTickets } from "@/hooks/useTickets";
 
 export default function ConfirmationScreen() {
   const params = useLocalSearchParams<{ total: string; date: string; passengers: string }>();
   const total = Number(params.total ?? 0);
+  const { addTicket } = useTickets();
+  const hasAdded = useRef(false);
+
+  useEffect(() => {
+    if (hasAdded.current) return;
+    hasAdded.current = true;
+    addTicket({
+      departure: ROUTE.departure,
+      destination: ROUTE.destination,
+      dateLabel: params.date ?? "",
+      passengersLabel: params.passengers ?? "",
+      total,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.white }} edges={["top", "bottom"]}>
@@ -63,9 +80,16 @@ export default function ConfirmationScreen() {
           </Text>
         </View>
 
+        <View style={{ width: "100%", marginBottom: 12 }}>
+          <PillButton
+            label="Voir mes billets"
+            variant="gradient"
+            onPress={() => router.replace("/(tabs)/tickets")}
+          />
+        </View>
         <PillButton
           label="Retour à l'accueil"
-          variant="gradient"
+          variant="outline"
           onPress={() => router.replace("/(tabs)/home")}
         />
       </View>

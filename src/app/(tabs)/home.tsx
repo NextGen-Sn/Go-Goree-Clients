@@ -106,7 +106,7 @@ export default function HomeScreen() {
             </Text>
           </View>
 
-          <Pressable onPress={() => router.push("/(tabs)/tickets")}>
+          <Pressable onPress={() => router.push("/ticket/new")}>
             <LinearGradient
               colors={gradients.primary}
               start={{ x: 0, y: 0 }}
