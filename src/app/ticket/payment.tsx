@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, Pressable, ScrollView } from "react-native";
+import { View, Text, Pressable, Image, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -12,15 +12,18 @@ import { payViaPaydunya, PaydunyaMethod } from "@/services/paydunya.service";
 type PaymentMethod = {
   id: PaydunyaMethod | "wallet";
   label: string;
-  badgeColor: string;
-  badgeText: string;
+  logo?: number;
 };
 
 const methods: PaymentMethod[] = [
-  { id: "wave", label: "Wave", badgeColor: "#1D9BF0", badgeText: "W" },
-  { id: "orange", label: "Orange Money", badgeColor: "#FF7900", badgeText: "OM" },
-  { id: "yas", label: "Yas", badgeColor: "#FFC800", badgeText: "Y" },
-  { id: "wallet", label: "Portefeuille GO GOREE", badgeColor: colors.primary, badgeText: "" },
+  { id: "wave", label: "Wave", logo: require("../../../assets/payment-logos/wave.png") },
+  {
+    id: "orange",
+    label: "Orange Money",
+    logo: require("../../../assets/payment-logos/orange-money.png"),
+  },
+  { id: "yas", label: "Yas", logo: require("../../../assets/payment-logos/yas.png") },
+  { id: "wallet", label: "Portefeuille GO GOREE" },
 ];
 
 export default function PaymentScreen() {
@@ -143,18 +146,23 @@ export default function PaymentScreen() {
                     width: 38,
                     height: 38,
                     borderRadius: 19,
-                    backgroundColor: method.badgeColor,
+                    backgroundColor: method.id === "wallet" ? colors.primary : colors.white,
+                    borderWidth: method.id === "wallet" ? 0 : 1,
+                    borderColor: colors.border,
                     alignItems: "center",
                     justifyContent: "center",
                     marginRight: 12,
+                    overflow: "hidden",
                   }}
                 >
                   {method.id === "wallet" ? (
                     <Ionicons name="wallet" size={18} color={colors.white} />
                   ) : (
-                    <Text style={{ color: colors.white, fontWeight: "800", fontSize: 13 }}>
-                      {method.badgeText}
-                    </Text>
+                    <Image
+                      source={method.logo}
+                      style={{ width: 32, height: 32 }}
+                      resizeMode="contain"
+                    />
                   )}
                 </View>
                 <View style={{ flex: 1, marginRight: 12 }}>

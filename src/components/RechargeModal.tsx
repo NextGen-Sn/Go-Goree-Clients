@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Modal, View, Text, Pressable, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
+import { useState } from "react";
+import { Modal, View, Text, Image, Pressable, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -9,9 +9,9 @@ import { formatFcfa } from "@/constants/trip";
 const AMOUNTS = [1000, 2000, 5000, 10000, 20000, 50000];
 
 const METHODS = [
-  { id: "wave", label: "Wave", badgeColor: "#1D9BF0", badgeText: "W" },
-  { id: "orange", label: "Orange Money", badgeColor: "#FF7900", badgeText: "OM" },
-  { id: "yas", label: "Yas", badgeColor: "#FFC800", badgeText: "Y" },
+  { id: "wave", label: "Wave", logo: require("../../assets/payment-logos/wave.png") },
+  { id: "orange", label: "Orange Money", logo: require("../../assets/payment-logos/orange-money.png") },
+  { id: "yas", label: "Yas", logo: require("../../assets/payment-logos/yas.png") },
 ];
 
 interface RechargeModalProps {
@@ -82,8 +82,8 @@ export function RechargeModal({ visible, onClose, onConfirm, initialAmount }: Re
                     onPress={() => setMethod(m.id)}
                     style={[styles.methodRow, isSelected && styles.methodRowSelected]}
                   >
-                    <View style={[styles.methodBadge, { backgroundColor: m.badgeColor }]}>
-                      <Text style={styles.methodBadgeText}>{m.badgeText}</Text>
+                    <View style={styles.methodBadge}>
+                      <Image source={m.logo} style={{ width: 32, height: 32 }} resizeMode="contain" />
                     </View>
                     <Text style={styles.methodLabel}>{m.label}</Text>
                     <View style={[styles.radio, isSelected && styles.radioSelected]}>
@@ -213,14 +213,13 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
-  },
-  methodBadgeText: {
-    color: colors.white,
-    fontWeight: "800",
-    fontSize: 13,
+    overflow: "hidden",
   },
   methodLabel: {
     flex: 1,
