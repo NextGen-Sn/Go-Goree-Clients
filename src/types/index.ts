@@ -21,3 +21,14 @@ export interface Ticket {
   purchasedAt: string;
   status: TicketStatus;
 }
+
+export type TransactionType = "recharge" | "paiement";
+
+export interface Transaction {
+  id: string;
+  type: TransactionType;
+  label: string;
+  amount: number;
+  date: string;
+  method: string;
+}

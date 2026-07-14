@@ -5,19 +5,22 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { TicketsProvider } from "@/contexts/TicketsContext";
+import { WalletProvider } from "@/contexts/WalletContext";
 
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AuthProvider>
-          <TicketsProvider>
-            <StatusBar style="auto" />
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="(auth)" />
-            </Stack>
-          </TicketsProvider>
+          <WalletProvider>
+            <TicketsProvider>
+              <StatusBar style="auto" />
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="(auth)" />
+              </Stack>
+            </TicketsProvider>
+          </WalletProvider>
         </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

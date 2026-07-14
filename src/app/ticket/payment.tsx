@@ -6,28 +6,20 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import { colors, gradients } from "@/constants/theme";
 import { ROUTE, formatFcfa } from "@/constants/trip";
-
-const WALLET_BALANCE = 25000;
+import { useWallet } from "@/hooks/useWallet";
 
 type PaymentMethod = {
   id: string;
   label: string;
   badgeColor: string;
   badgeText: string;
-  subtitle?: string;
 };
 
 const methods: PaymentMethod[] = [
   { id: "wave", label: "Wave", badgeColor: "#1D9BF0", badgeText: "W" },
   { id: "orange", label: "Orange Money", badgeColor: "#FF7900", badgeText: "OM" },
   { id: "yas", label: "Yas", badgeColor: "#FFC800", badgeText: "Y" },
-  {
-    id: "wallet",
-    label: "Portefeuille GO GOREE",
-    badgeColor: colors.primary,
-    badgeText: "",
-    subtitle: `Solde: ${formatFcfa(WALLET_BALANCE)}`,
-  },
+  { id: "wallet", label: "Portefeuille GO GOREE", badgeColor: colors.primary, badgeText: "" },
 ];
 
 export default function PaymentScreen() {
@@ -46,6 +38,8 @@ export default function PaymentScreen() {
 
   const [selected, setSelected] = useState<string>("wave");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const wallet = useWallet();
 
   function passengersLabel() {
     const parts = [`${adults} adulte${adults > 1 ? "s" : ""}`];
@@ -55,9 +49,19 @@ export default function PaymentScreen() {
   }
 
   function handlePay() {
+    setError(null);
+
+    if (selected === "wallet" && total > wallet.balance) {
+      setError("Solde insuffisant. Rechargez votre wallet ou choisissez un autre mode de paiement.");
+      return;
+    }
+
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
+      if (selected === "wallet") {
+        wallet.pay(total, `Billet ${ROUTE.departure} ↔ ${ROUTE.destination}`);
+      }
       router.replace({
         pathname: "/ticket/confirmation",
         params: { total: String(total), date, passengers: passengersLabel() },
@@ -158,8 +162,10 @@ export default function PaymentScreen() {
                   <Text style={{ fontSize: 15, fontWeight: "600", color: colors.textDark }}>
                     {method.label}
                   </Text>
-                  {method.subtitle ? (
-                    <Text style={{ fontSize: 12, color: colors.textGray }}>{method.subtitle}</Text>
+                  {method.id === "wallet" ? (
+                    <Text style={{ fontSize: 12, color: colors.textGray }}>
+                      Solde: {formatFcfa(wallet.balance)}
+                    </Text>
                   ) : null}
                 </View>
                 <View
@@ -188,6 +194,10 @@ export default function PaymentScreen() {
             );
           })}
         </View>
+
+        {error ? (
+          <Text style={{ color: "#DC2626", fontSize: 13, marginBottom: 12 }}>{error}</Text>
+        ) : null}
 
         <Pressable onPress={handlePay} disabled={loading}>
           <LinearGradient
