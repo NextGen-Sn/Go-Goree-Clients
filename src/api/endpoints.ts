@@ -1,11 +1,24 @@
 export const endpoints = {
   auth: {
-    login: "/auth/login",
-    logout: "/auth/logout",
-    me: "/auth/me",
+    register: "/register",
+    login: "/login",
+    logout: "/logout",
+    me: "/me",
   },
-  users: {
-    list: "/users",
-    detail: (id: string) => `/users/${id}`,
+  voyages: {
+    list: "/voyages",
+    detail: (id: string) => `/voyages/${id}`,
+  },
+  tarifs: {
+    list: "/tarifs",
+  },
+  billets: {
+    list: "/billets",
+    create: "/billets",
+    detail: (id: string) => `/billets/${id}`,
+  },
+  portefeuille: {
+    get: "/portefeuille",
+    recharge: "/portefeuille/recharge",
   },
 };

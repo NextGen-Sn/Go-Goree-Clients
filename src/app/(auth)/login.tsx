@@ -8,6 +8,8 @@ import { TextField } from "@/components/ui/TextField";
 import { PillButton } from "@/components/ui/PillButton";
 import { SocialButton } from "@/components/ui/SocialButton";
 import { useAuth } from "@/hooks/useAuth";
+import { useRetryCountdown } from "@/hooks/useRetryCountdown";
+import { formatApiError, getRetryAfterSeconds } from "@/utils/apiError";
 
 export default function LoginScreen() {
   const { login } = useAuth();
@@ -15,6 +17,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const { secondsLeft, start: startRetryCountdown } = useRetryCountdown();
 
   async function handleSubmit() {
     try {
@@ -23,11 +26,15 @@ export default function LoginScreen() {
       await login({ email, password });
       router.replace("/(tabs)/home");
     } catch (err) {
-      setError((err as { message: string }).message ?? "Connexion impossible");
+      setError(formatApiError(err));
+      const retryAfter = getRetryAfterSeconds(err);
+      if (retryAfter) startRetryCountdown(retryAfter);
     } finally {
       setLoading(false);
     }
   }
+
+  const isBlocked = secondsLeft > 0;
 
   return (
     <LinearGradient colors={gradients.primary} style={{ flex: 1 }}>
@@ -100,9 +107,10 @@ export default function LoginScreen() {
               ) : null}
 
               <PillButton
-                label="Connexion"
+                label={isBlocked ? `Réessayez dans ${secondsLeft}s` : "Connexion"}
                 variant="white"
                 loading={loading}
+                disabled={isBlocked}
                 onPress={handleSubmit}
               />
 

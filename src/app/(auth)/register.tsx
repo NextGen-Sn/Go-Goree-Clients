@@ -6,8 +6,12 @@ import { Link, router } from "expo-router";
 import { colors } from "@/constants/theme";
 import { TextField } from "@/components/ui/TextField";
 import { PillButton } from "@/components/ui/PillButton";
+import { useAuth } from "@/hooks/useAuth";
+import { useRetryCountdown } from "@/hooks/useRetryCountdown";
+import { formatApiError, getRetryAfterSeconds } from "@/utils/apiError";
 
 export default function RegisterScreen() {
+  const { register } = useAuth();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("+221 ");
@@ -16,21 +20,40 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const { secondsLeft, start: startRetryCountdown } = useRetryCountdown();
 
   async function handleSubmit() {
     if (password !== confirmPassword) {
       setError("Les mots de passe ne correspondent pas");
       return;
     }
+    // Le backend exige un mot de passe d'au moins 8 caractères (RegisterRequest).
+    if (password.length < 8) {
+      setError("Le mot de passe doit contenir au moins 8 caractères");
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
-      // TODO: brancher authService.register une fois l'API disponible
-      router.replace("/(auth)/login");
+      await register({
+        firstName,
+        lastName,
+        phone,
+        email,
+        password,
+        passwordConfirmation: confirmPassword,
+      });
+      router.replace("/(tabs)/home");
+    } catch (err) {
+      setError(formatApiError(err));
+      const retryAfter = getRetryAfterSeconds(err);
+      if (retryAfter) startRetryCountdown(retryAfter);
     } finally {
       setLoading(false);
     }
   }
+
+  const isBlocked = secondsLeft > 0;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.white }} edges={["top", "bottom"]}>
@@ -123,9 +146,10 @@ export default function RegisterScreen() {
 
           <View style={{ marginTop: 28 }}>
             <PillButton
-              label="Créer mon compte"
+              label={isBlocked ? `Réessayez dans ${secondsLeft}s` : "Créer mon compte"}
               variant="gradient"
               loading={loading}
+              disabled={isBlocked}
               onPress={handleSubmit}
             />
           </View>

@@ -10,7 +10,7 @@ export interface ApiError {
   status?: number;
 }
 
-export type TicketStatus = "valide" | "utilisé" | "expiré";
+export type TicketStatus = "en_attente" | "valide" | "utilisé" | "expiré";
 
 export interface Ticket {
   id: string;
@@ -24,13 +24,3 @@ export interface Ticket {
   status: TicketStatus;
 }
 
-export type TransactionType = "recharge" | "paiement";
-
-export interface Transaction {
-  id: string;
-  type: TransactionType;
-  label: string;
-  amount: number;
-  date: string;
-  method: string;
-}
