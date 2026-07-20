@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { View, Text, Pressable, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -10,20 +10,37 @@ import { ROUTE, formatFcfa } from "@/constants/trip";
 import { CATEGORIE_LABELS, CATEGORIE_ICONS } from "@/constants/categorie";
 import { TripSelection } from "@/types/voyage";
 import { useTarifs } from "@/hooks/useTarifs";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function NewTicketScreen() {
+  const { user } = useAuth();
+  // Résident avec abonnement actif : le billet est offert par l'abonnement,
+  // aucun tarif ni paiement à choisir (le backend génère un billet gratuit).
+  const isFree = user?.abonnement?.actif ?? false;
+  const estResident = user?.estResident ?? false;
+
   const { data: tarifs, isLoading, isError } = useTarifs();
   const [selectedTarifId, setSelectedTarifId] = useState<string | null>(null);
   const [pickerVisible, setPickerVisible] = useState(false);
   const [trip, setTrip] = useState<TripSelection | null>(null);
 
-  useEffect(() => {
-    if (tarifs && tarifs.length > 0 && !selectedTarifId) {
-      setSelectedTarifId(tarifs[0].id);
-    }
-  }, [tarifs, selectedTarifId]);
+  // Tarifs visibles selon le statut : un résident ne voit que le tarif RESIDENT ;
+  // un client normal voit les tarifs grand public (enfant/adulte/étranger) et
+  // jamais le tarif résident. Le backend applique la même règle à l'achat.
+  const visibleTarifs = useMemo(() => {
+    if (!tarifs) return [];
+    return estResident
+      ? tarifs.filter((t) => t.categorie === "RESIDENT")
+      : tarifs.filter((t) => t.categorie !== "RESIDENT");
+  }, [tarifs, estResident]);
 
-  const selected = tarifs?.find((t) => t.id === selectedTarifId) ?? null;
+  useEffect(() => {
+    if (visibleTarifs.length > 0 && !visibleTarifs.some((t) => t.id === selectedTarifId)) {
+      setSelectedTarifId(visibleTarifs[0].id);
+    }
+  }, [visibleTarifs, selectedTarifId]);
+
+  const selected = visibleTarifs.find((t) => t.id === selectedTarifId) ?? null;
 
   function handleConfirmTrip(selection: TripSelection) {
     setTrip(selection);
@@ -33,6 +50,19 @@ export default function NewTicketScreen() {
   function handlePay() {
     if (!trip) {
       setPickerVisible(true);
+      return;
+    }
+    if (isFree) {
+      router.push({
+        pathname: "/ticket/payment",
+        params: {
+          voyageId: trip.voyage.id,
+          free: "1",
+          passengerLabel: "Résident abonné",
+          total: "0",
+          date: `${trip.dateLabel} • ${trip.timeLabel}`,
+        },
+      });
       return;
     }
     if (!selected) return;
@@ -134,7 +164,28 @@ export default function NewTicketScreen() {
           Ce billet est valable pour 1 personne.
         </Text>
 
-        {isLoading ? (
+        {isFree ? (
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: "#DCFCE7",
+              borderRadius: 16,
+              padding: 16,
+              marginBottom: 32,
+            }}
+          >
+            <View style={{ width: 42, height: 42, borderRadius: 12, backgroundColor: "#16A34A", alignItems: "center", justifyContent: "center", marginRight: 12 }}>
+              <Ionicons name="ribbon" size={20} color={colors.white} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 15, fontWeight: "700", color: "#166534" }}>Billet gratuit</Text>
+              <Text style={{ fontSize: 12, color: "#166534", marginTop: 2 }}>
+                Offert par votre abonnement résident.
+              </Text>
+            </View>
+          </View>
+        ) : isLoading ? (
           <View style={{ paddingVertical: 24, alignItems: "center" }}>
             <ActivityIndicator color={colors.primary} />
           </View>
@@ -144,7 +195,7 @@ export default function NewTicketScreen() {
           </Text>
         ) : (
           <View style={{ marginBottom: 32 }}>
-            {(tarifs ?? []).map((tarif, i) => {
+            {visibleTarifs.map((tarif, i) => {
               const isSelected = selectedTarifId === tarif.id;
               return (
                 <Pressable
@@ -152,7 +203,7 @@ export default function NewTicketScreen() {
                   onPress={() => setSelectedTarifId(tarif.id)}
                   style={[
                     styles.passengerCard,
-                    i < (tarifs?.length ?? 0) - 1 && { marginBottom: 12 },
+                    i < visibleTarifs.length - 1 && { marginBottom: 12 },
                     isSelected && styles.passengerCardSelected,
                   ]}
                 >
@@ -185,14 +236,14 @@ export default function NewTicketScreen() {
           }}
         >
           <Text style={{ fontSize: 14, color: colors.textGray }}>
-            1 billet • {selected ? CATEGORIE_LABELS[selected.categorie] : "—"}
+            1 billet • {isFree ? "Résident abonné" : selected ? CATEGORIE_LABELS[selected.categorie] : "—"}
           </Text>
-          <Text style={{ fontSize: 18, fontWeight: "800", color: colors.textDark }}>
-            {selected ? formatFcfa(Number(selected.prix)) : "—"}
+          <Text style={{ fontSize: 18, fontWeight: "800", color: isFree ? "#16A34A" : colors.textDark }}>
+            {isFree ? "Gratuit" : selected ? formatFcfa(Number(selected.prix)) : "—"}
           </Text>
         </View>
 
-        <Pressable onPress={handlePay} disabled={!selected}>
+        <Pressable onPress={handlePay} disabled={!isFree && !selected}>
           <LinearGradient
             colors={gradients.primary}
             start={{ x: 0, y: 0 }}
@@ -202,15 +253,17 @@ export default function NewTicketScreen() {
               borderRadius: 14,
               alignItems: "center",
               justifyContent: "center",
-              opacity: selected ? 1 : 0.6,
+              opacity: isFree || selected ? 1 : 0.6,
             }}
           >
             <Text style={{ fontSize: 16, fontWeight: "700", color: colors.white }}>
-              {!selected
+              {!isFree && !selected
                 ? "Chargement des tarifs..."
-                : trip
-                  ? `Payer ${formatFcfa(Number(selected.prix))}`
-                  : "Choisir le voyage pour continuer"}
+                : !trip
+                  ? "Choisir le voyage pour continuer"
+                  : isFree
+                    ? "Réserver mon billet gratuit"
+                    : `Payer ${formatFcfa(Number(selected!.prix))}`}
             </Text>
           </LinearGradient>
         </Pressable>

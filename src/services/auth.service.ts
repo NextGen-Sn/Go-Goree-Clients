@@ -12,6 +12,13 @@ interface ApiUser {
   email: string;
   telephone: string | null;
   role?: { id: string; nom: string } | null;
+  est_resident?: boolean;
+  // Présent uniquement sur /me (pas sur login/register).
+  abonnement?: {
+    actif: boolean;
+    date_fin: string | null;
+    plan: { nom: string; duree_mois: number } | null;
+  } | null;
 }
 
 // LoginResource désactive le wrapping Laravel ($wrap = null) : /login et /register
@@ -28,6 +35,16 @@ function mapApiUserToUser(apiUser: ApiUser): User {
     name: `${apiUser.prenom} ${apiUser.nom}`.trim(),
     email: apiUser.email,
     phone: apiUser.telephone ?? undefined,
+    estResident: Boolean(apiUser.est_resident),
+    abonnement: apiUser.abonnement
+      ? {
+          actif: apiUser.abonnement.actif,
+          dateFin: apiUser.abonnement.date_fin,
+          plan: apiUser.abonnement.plan
+            ? { nom: apiUser.abonnement.plan.nom, dureeMois: apiUser.abonnement.plan.duree_mois }
+            : null,
+        }
+      : null,
   };
 }
 

@@ -3,6 +3,13 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
+  estResident: boolean;
+  // Résumé de l'abonnement actif (exposé par /me). null si l'info n'est pas chargée.
+  abonnement: {
+    actif: boolean;
+    dateFin: string | null;
+    plan: { nom: string; dureeMois: number } | null;
+  } | null;
 }
 
 export interface ApiError {

@@ -19,6 +19,17 @@ export const endpoints = {
   },
   portefeuille: {
     get: "/portefeuille",
+    mouvements: "/portefeuille/mouvements",
     recharge: "/portefeuille/recharge",
+  },
+  residents: {
+    demandes: "/demandes-residence",
+    demandeDetail: (id: string) => `/demandes-residence/${id}`,
+  },
+  plans: {
+    list: "/plans",
+  },
+  abonnements: {
+    souscrire: "/abonnements/souscrire",
   },
 };

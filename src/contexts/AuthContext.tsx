@@ -11,11 +11,14 @@ interface AuthContextValue {
   login: (payload: LoginPayload) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
+  // Recharge /me (ex. après souscription d'abonnement) pour rafraîchir le
+  // statut résident et l'abonnement actif portés par `user`.
+  refreshUser: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-const ME_QUERY_KEY = ["auth", "me"] as const;
+export const ME_QUERY_KEY = ["auth", "me"] as const;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
@@ -53,22 +56,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [meQuery.isError]);
 
+  // La réponse de /login|/register n'inclut pas l'abonnement (relation non
+  // chargée) : on seed le cache pour un affichage immédiat (nom...), puis on
+  // invalide pour que /me enrichisse avec est_resident + abonnement actif.
+  const seedThenRefreshMe = async (user: User, token: string) => {
+    await storage.set("auth_token", token);
+    queryClient.setQueryData(ME_QUERY_KEY, user);
+    setHasToken(true);
+    queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY });
+  };
+
   const loginMutation = useMutation({
     mutationFn: authService.login,
-    onSuccess: async ({ user, token }) => {
-      await storage.set("auth_token", token);
-      queryClient.setQueryData(ME_QUERY_KEY, user);
-      setHasToken(true);
-    },
+    onSuccess: ({ user, token }) => seedThenRefreshMe(user, token),
   });
 
   const registerMutation = useMutation({
     mutationFn: authService.register,
-    onSuccess: async ({ user, token }) => {
-      await storage.set("auth_token", token);
-      queryClient.setQueryData(ME_QUERY_KEY, user);
-      setHasToken(true);
-    },
+    onSuccess: ({ user, token }) => seedThenRefreshMe(user, token),
   });
 
   const logout = useCallback(async () => {
@@ -95,6 +100,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await registerMutation.mutateAsync(payload);
     },
     logout,
+    refreshUser: async () => {
+      await queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY });
+    },
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

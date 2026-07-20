@@ -47,11 +47,14 @@ export default function PaymentScreen() {
     passengerLabel: string;
     total: string;
     date: string;
+    free: string;
   }>();
   const passengerLabel = params.passengerLabel ?? "Adulte";
   const total = Number(params.total ?? 0);
   const date = params.date ?? "";
   const passengers = `1 ${passengerLabel}`;
+  // Billet offert par l'abonnement résident : aucun mode de paiement à choisir.
+  const isFree = params.free === "1";
 
   const [selected, setSelected] = useState<PaymentMethod["id"]>("wave");
   const [loading, setLoading] = useState(false);
@@ -63,20 +66,25 @@ export default function PaymentScreen() {
   async function handlePay() {
     setError(null);
 
-    if (selected === "wallet" && total > balance) {
+    if (!isFree && selected === "wallet" && total > balance) {
       setError("Solde insuffisant. Rechargez votre wallet ou choisissez un autre mode de paiement.");
       return;
     }
 
     setLoading(true);
     try {
-      const paymentMode: PaymentMode =
-        selected === "wallet" ? "PORTEFEUILLE" : PAYDUNYA_MODE_MAP[selected];
+      // En mode gratuit, le mode de paiement est ignoré côté backend (le billet
+      // résident abonné est généré à 0 FCFA) : on envoie PORTEFEUILLE par défaut.
+      const paymentMode: PaymentMode = isFree
+        ? "PORTEFEUILLE"
+        : selected === "wallet"
+          ? "PORTEFEUILLE"
+          : PAYDUNYA_MODE_MAP[selected];
 
       const { billet, redirectUrl } = await billetService.purchase({
         voyageId: params.voyageId,
         paymentMode,
-        categorie: params.categorie as CategorieTarif,
+        categorie: isFree ? undefined : (params.categorie as CategorieTarif),
       });
 
       // Seed du cache : l'écran de confirmation (et le détail) lisent
@@ -147,8 +155,8 @@ export default function PaymentScreen() {
             <Text style={{ fontSize: 15, fontWeight: "700", color: colors.textDark }}>
               {ROUTE.departure} ↔ {ROUTE.destination}
             </Text>
-            <Text style={{ fontSize: 16, fontWeight: "800", color: colors.primary }}>
-              {formatFcfa(total)}
+            <Text style={{ fontSize: 16, fontWeight: "800", color: isFree ? "#16A34A" : colors.primary }}>
+              {isFree ? "Gratuit" : formatFcfa(total)}
             </Text>
           </View>
           <Text style={{ fontSize: 13, color: colors.textGray }}>
@@ -156,6 +164,24 @@ export default function PaymentScreen() {
           </Text>
         </View>
 
+        {isFree ? (
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: "#DCFCE7",
+              borderRadius: 14,
+              padding: 16,
+              marginBottom: 32,
+            }}
+          >
+            <Ionicons name="ribbon" size={22} color="#16A34A" style={{ marginRight: 12 }} />
+            <Text style={{ flex: 1, fontSize: 13, color: "#166534", fontWeight: "600" }}>
+              Ce billet est offert par votre abonnement résident. Aucun paiement requis.
+            </Text>
+          </View>
+        ) : (
+          <>
         <Text style={{ fontSize: 16, fontWeight: "700", color: colors.textDark, marginBottom: 14 }}>
           Choisir un mode de paiement
         </Text>
@@ -240,6 +266,8 @@ export default function PaymentScreen() {
             );
           })}
         </View>
+          </>
+        )}
 
         {error ? (
           <Text style={{ color: "#DC2626", fontSize: 13, marginBottom: 12 }}>{error}</Text>
@@ -259,7 +287,13 @@ export default function PaymentScreen() {
             }}
           >
             <Text style={{ fontSize: 16, fontWeight: "700", color: colors.white }}>
-              {loading ? "Paiement en cours…" : `Payer ${formatFcfa(total)}`}
+              {loading
+                ? isFree
+                  ? "Réservation…"
+                  : "Paiement en cours…"
+                : isFree
+                  ? "Confirmer ma réservation"
+                  : `Payer ${formatFcfa(total)}`}
             </Text>
           </LinearGradient>
         </Pressable>

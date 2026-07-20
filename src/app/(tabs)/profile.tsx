@@ -124,6 +124,12 @@ export default function ProfileScreen() {
           label="Demande carte résident"
           onPress={() => router.push("/demande-carte-resident")}
         />
+        <ProfileRow
+          icon="ribbon-outline"
+          label="Mon abonnement"
+          value={user?.abonnement?.actif ? "Actif" : undefined}
+          onPress={() => router.push("/abonnement")}
+        />
         <ProfileRow icon="create-outline" label="Modifier le profil" />
         <ProfileRow icon="lock-closed-outline" label="Changer mot de passe" />
         <ProfileRow
