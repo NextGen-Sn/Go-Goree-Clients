@@ -8,9 +8,11 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "sn.gogoree.clients"
     },
     "android": {
+      "package": "sn.gogoree.clients",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -38,7 +40,8 @@
           "cameraPermission": "Go Goree a besoin d'accéder à votre caméra pour photographier vos documents."
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-notifications"
     ]
   }
 }

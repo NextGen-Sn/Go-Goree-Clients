@@ -1,8 +1,12 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/constants/theme";
+import { useDepartureReminders } from "@/hooks/useDepartureReminders";
 
 export default function TabsLayout() {
+  // Programme les rappels locaux de départ dès qu'un utilisateur connecté a des billets.
+  useDepartureReminders();
+
   return (
     <Tabs
       initialRouteName="home"
