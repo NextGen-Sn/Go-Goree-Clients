@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { colors, gradients } from "@/constants/theme";
 import { TextField } from "@/components/ui/TextField";
 import { PillButton } from "@/components/ui/PillButton";
@@ -12,6 +13,7 @@ import { authService } from "@/services/auth.service";
 import { formatApiError, getRetryAfterSeconds } from "@/utils/apiError";
 
 export default function ForgotPasswordScreen() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -20,7 +22,7 @@ export default function ForgotPasswordScreen() {
   async function handleSubmit() {
     setError(null);
     if (!email.trim()) {
-      setError("Veuillez saisir votre email.");
+      setError(t("auth.emailRequired"));
       return;
     }
     setLoading(true);
@@ -49,11 +51,10 @@ export default function ForgotPasswordScreen() {
 
             <View style={{ marginTop: 24, marginBottom: 24 }}>
               <Text style={{ fontSize: 24, fontWeight: "800", color: colors.white, marginBottom: 8 }}>
-                Mot de passe oublié
+                {t("auth.forgotPasswordTitle")}
               </Text>
               <Text style={{ fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 20 }}>
-                Saisissez votre email : nous vous enverrons un code à 6 chiffres pour définir un
-                nouveau mot de passe.
+                {t("auth.forgotPasswordSubtitle")}
               </Text>
             </View>
 
@@ -67,7 +68,7 @@ export default function ForgotPasswordScreen() {
               <TextField
                 icon="mail-outline"
                 variant="onBlue"
-                placeholder="Email"
+                placeholder={t("auth.email")}
                 autoCapitalize="none"
                 keyboardType="email-address"
                 value={email}
@@ -80,7 +81,7 @@ export default function ForgotPasswordScreen() {
 
               <View style={{ marginTop: 20 }}>
                 <PillButton
-                  label={isBlocked ? `Réessayez dans ${secondsLeft}s` : "Envoyer le code"}
+                  label={isBlocked ? t("auth.retryIn", { seconds: secondsLeft }) : t("auth.sendCode")}
                   variant="white"
                   loading={loading}
                   disabled={isBlocked}
@@ -93,7 +94,7 @@ export default function ForgotPasswordScreen() {
                 style={{ alignSelf: "center", marginTop: 16 }}
               >
                 <Text style={{ fontSize: 13, color: "rgba(255,255,255,0.85)" }}>
-                  J'ai déjà un code
+                  {t("auth.alreadyHaveCode")}
                 </Text>
               </Pressable>
             </View>

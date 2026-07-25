@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { View, Text, Pressable, ScrollView, Switch } from "react-native";
+import { View, Text, Pressable, ScrollView, Switch, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { colors } from "@/constants/theme";
 import { APP_NAME } from "@/constants/config";
 
@@ -73,9 +74,20 @@ function ToggleRow({
   );
 }
 
-function LinkRow({ label, value, last }: { label: string; value?: string; last?: boolean }) {
+function LinkRow({
+  label,
+  value,
+  last,
+  onPress,
+}: {
+  label: string;
+  value?: string;
+  last?: boolean;
+  onPress?: () => void;
+}) {
   return (
     <Pressable
+      onPress={onPress}
       style={{
         flexDirection: "row",
         alignItems: "center",
@@ -94,8 +106,30 @@ function LinkRow({ label, value, last }: { label: string; value?: string; last?:
 }
 
 export default function SettingsScreen() {
+  const { t, i18n } = useTranslation();
   const [pushEnabled, setPushEnabled] = useState(true);
   const [biometricsEnabled, setBiometricsEnabled] = useState(true);
+
+  const handleLanguageChange = () => {
+    Alert.alert(
+      t("settings.appLanguage"),
+      undefined,
+      [
+        {
+          text: "Français",
+          onPress: () => i18n.changeLanguage("fr"),
+        },
+        {
+          text: "English",
+          onPress: () => i18n.changeLanguage("en"),
+        },
+        {
+          text: t("common.cancel"),
+          style: "cancel",
+        },
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.inputBg }} edges={["top", "bottom"]}>
@@ -113,26 +147,30 @@ export default function SettingsScreen() {
           <Ionicons name="chevron-back" size={26} color={colors.textDark} />
         </Pressable>
         <Text style={{ fontSize: 18, fontWeight: "700", color: colors.textDark, marginLeft: 12 }}>
-          Paramètres
+          {t("settings.title")}
         </Text>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}>
-        <SectionLabel>SÉCURITÉ</SectionLabel>
+        <SectionLabel>{t("settings.security")}</SectionLabel>
         <Card>
-          <ToggleRow label="Notifications push" value={pushEnabled} onValueChange={setPushEnabled} />
+          <ToggleRow label={t("settings.pushNotifications")} value={pushEnabled} onValueChange={setPushEnabled} />
           <ToggleRow
-            label="Biométrie / Face ID"
+            label={t("settings.biometrics")}
             value={biometricsEnabled}
             onValueChange={setBiometricsEnabled}
             last
           />
         </Card>
 
-        <SectionLabel>PRÉFÉRENCES</SectionLabel>
+        <SectionLabel>{t("settings.preferences")}</SectionLabel>
         <Card>
-          <LinkRow label="Langue de l'app" value="Français" />
-          <LinkRow label="Thème" value="Clair" last />
+          <LinkRow
+            label={t("settings.appLanguage")}
+            value={i18n.language.startsWith("fr") ? "Français" : "English"}
+            onPress={handleLanguageChange}
+          />
+          <LinkRow label={t("settings.theme")} value={t("settings.light")} last />
         </Card>
 
         <View style={{ alignItems: "center", marginTop: 32 }}>
@@ -147,7 +185,7 @@ export default function SettingsScreen() {
                 textDecorationLine: "underline",
               }}
             >
-              Conditions Générales d'Utilisation
+              {t("settings.cgu")}
             </Text>
           </Pressable>
         </View>

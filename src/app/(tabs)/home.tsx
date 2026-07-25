@@ -4,12 +4,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { colors, gradients } from "@/constants/theme";
 import { useVoyages, UPCOMING_VOYAGES_PARAMS } from "@/hooks/useVoyages";
 import { formatHeureDepart, todayIso } from "@/utils/date";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function HomeScreen() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { data: voyages, isLoading, isError } = useVoyages(UPCOMING_VOYAGES_PARAMS);
   const firstName = user?.name?.split(" ")[0];
@@ -50,9 +52,9 @@ export default function HomeScreen() {
             }}
           >
             <View>
-              <Text style={{ color: colors.white, fontSize: 14 }}>Bonjour,</Text>
+              <Text style={{ color: colors.white, fontSize: 14 }}>{t("dashboard.hello")}</Text>
               <Text style={{ color: colors.white, fontSize: 24, fontWeight: "800" }}>
-                {firstName ?? "voyageur"}
+                {firstName ?? t("dashboard.defaultUser")}
               </Text>
             </View>
             <Pressable
@@ -85,11 +87,11 @@ export default function HomeScreen() {
           }}
         >
           <Text style={{ fontSize: 18, fontWeight: "700", color: colors.textDark }}>
-            Prochain départ
+            {t("dashboard.nextDeparture")}
           </Text>
           <Pressable>
             <Text style={{ fontSize: 13, fontWeight: "600", color: colors.primary }}>
-              Voir tout
+              {t("dashboard.viewAll")}
             </Text>
           </Pressable>
         </View>
@@ -113,11 +115,11 @@ export default function HomeScreen() {
             </View>
           ) : isError ? (
             <Text style={{ fontSize: 13, color: colors.textGray, paddingVertical: 8 }}>
-              Impossible de charger les prochains départs.
+              {t("dashboard.errorLoadingVoyages")}
             </Text>
           ) : !nextVoyage ? (
             <Text style={{ fontSize: 13, color: colors.textGray, paddingVertical: 8 }}>
-              Aucun voyage disponible pour le moment.
+              {t("dashboard.noVoyage")}
             </Text>
           ) : (
             <>
@@ -130,7 +132,7 @@ export default function HomeScreen() {
                 }}
               >
                 <Text style={{ fontSize: 16, fontWeight: "700", color: colors.textDark }}>
-                  Dakar → Île de Gorée
+                  {t("dashboard.routeDakarGoree")}
                 </Text>
                 <Text style={{ fontSize: 16, fontWeight: "700", color: colors.primary }}>
                   {formatHeureDepart(nextVoyage.trajet.heure_depart)}
@@ -140,7 +142,7 @@ export default function HomeScreen() {
               <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
                 <Ionicons name="people-outline" size={16} color={colors.textGray} style={{ marginRight: 6 }} />
                 <Text style={{ fontSize: 13, color: colors.textGray }}>
-                  {nextVoyage.places_restantes} places disponibles
+                  {t("dashboard.placesAvailable", { count: nextVoyage.places_restantes })}
                 </Text>
               </View>
             </>
@@ -159,14 +161,14 @@ export default function HomeScreen() {
               }}
             >
               <Text style={{ fontSize: 15, fontWeight: "700", color: colors.white }}>
-                Acheter un billet
+                {t("dashboard.buyTicket")}
               </Text>
             </LinearGradient>
           </Pressable>
         </View>
 
         <Text style={{ fontSize: 18, fontWeight: "700", color: colors.textDark, marginBottom: 12 }}>
-          Horaires des chaloupes
+          {t("dashboard.ferrySchedules")}
         </Text>
 
         <View
@@ -190,7 +192,7 @@ export default function HomeScreen() {
                 GO GOREE
               </Text>
               <Text style={{ fontSize: 13, color: colors.textGray }}>
-                Départs aujourd'hui
+                {t("dashboard.todayDepartures")}
               </Text>
             </View>
             <View
@@ -212,7 +214,7 @@ export default function HomeScreen() {
                   marginRight: 4,
                 }}
               />
-              <Text style={{ fontSize: 11, fontWeight: "700", color: "#16A34A" }}>Live</Text>
+              <Text style={{ fontSize: 11, fontWeight: "700", color: "#16A34A" }}>{t("dashboard.live")}</Text>
             </View>
           </View>
 
@@ -231,14 +233,14 @@ export default function HomeScreen() {
               <Ionicons name="arrow-forward" size={14} color={colors.textGray} />
             </View>
             <Text style={{ fontSize: 13, fontWeight: "700", color: colors.primary }}>
-              20 min
+              {t("dashboard.ferryDuration")}
             </Text>
           </View>
 
           <Text style={{ fontSize: 13, color: colors.textGray, lineHeight: 20 }}>
             {todayDepartures.length > 0
               ? todayDepartures.join(", ")
-              : "Aucun départ prévu aujourd'hui."}
+              : t("dashboard.noDeparturesToday")}
           </Text>
         </View>
       </ScrollView>

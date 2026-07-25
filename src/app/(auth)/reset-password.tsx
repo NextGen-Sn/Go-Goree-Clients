@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { colors, gradients } from "@/constants/theme";
 import { TextField } from "@/components/ui/TextField";
 import { PillButton } from "@/components/ui/PillButton";
@@ -11,6 +12,7 @@ import { authService } from "@/services/auth.service";
 import { formatApiError } from "@/utils/apiError";
 
 export default function ResetPasswordScreen() {
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{ email?: string }>();
   const [email, setEmail] = useState(params.email ?? "");
   const [code, setCode] = useState("");
@@ -21,10 +23,10 @@ export default function ResetPasswordScreen() {
 
   async function handleSubmit() {
     setError(null);
-    if (!email.trim()) return setError("Email requis.");
-    if (code.trim().length !== 6) return setError("Le code doit contenir 6 chiffres.");
-    if (password.length < 8) return setError("Le mot de passe doit contenir au moins 8 caractères.");
-    if (password !== confirm) return setError("Les mots de passe ne correspondent pas.");
+    if (!email.trim()) return setError(t("auth.emailRequiredShort"));
+    if (code.trim().length !== 6) return setError(t("auth.codeRequiredLength"));
+    if (password.length < 8) return setError(t("auth.passwordMinLengthShort"));
+    if (password !== confirm) return setError(t("auth.passwordsMustMatch"));
 
     setLoading(true);
     try {
@@ -34,7 +36,7 @@ export default function ResetPasswordScreen() {
         password,
         passwordConfirmation: confirm,
       });
-      Alert.alert("Mot de passe modifié", "Vous pouvez maintenant vous connecter.", [
+      Alert.alert(t("auth.resetSuccessTitle"), t("auth.resetSuccessMessage"), [
         { text: "OK", onPress: () => router.replace("/(auth)/login") },
       ]);
     } catch (err) {
@@ -55,10 +57,10 @@ export default function ResetPasswordScreen() {
 
             <View style={{ marginTop: 24, marginBottom: 24 }}>
               <Text style={{ fontSize: 24, fontWeight: "800", color: colors.white, marginBottom: 8 }}>
-                Nouveau mot de passe
+                {t("auth.newPassword")}
               </Text>
               <Text style={{ fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 20 }}>
-                Saisissez le code à 6 chiffres reçu par email et votre nouveau mot de passe.
+                {t("auth.resetPasswordSubtitle")}
               </Text>
             </View>
 
@@ -68,7 +70,7 @@ export default function ResetPasswordScreen() {
                   <TextField
                     icon="mail-outline"
                     variant="onBlue"
-                    placeholder="Email"
+                    placeholder={t("auth.email")}
                     autoCapitalize="none"
                     keyboardType="email-address"
                     value={email}
@@ -81,7 +83,7 @@ export default function ResetPasswordScreen() {
                 <TextField
                   icon="keypad-outline"
                   variant="onBlue"
-                  placeholder="Code à 6 chiffres"
+                  placeholder={t("auth.codePlaceholder")}
                   keyboardType="number-pad"
                   maxLength={6}
                   value={code}
@@ -92,7 +94,7 @@ export default function ResetPasswordScreen() {
                 <TextField
                   icon="lock-closed-outline"
                   variant="onBlue"
-                  placeholder="Nouveau mot de passe"
+                  placeholder={t("auth.newPassword")}
                   secureTextEntry
                   value={password}
                   onChangeText={setPassword}
@@ -101,7 +103,7 @@ export default function ResetPasswordScreen() {
               <TextField
                 icon="lock-closed-outline"
                 variant="onBlue"
-                placeholder="Confirmer le mot de passe"
+                placeholder={t("auth.confirmPassword")}
                 secureTextEntry
                 value={confirm}
                 onChangeText={setConfirm}
@@ -111,7 +113,7 @@ export default function ResetPasswordScreen() {
 
               <View style={{ marginTop: 20 }}>
                 <PillButton
-                  label="Réinitialiser"
+                  label={t("auth.resetButton")}
                   variant="white"
                   loading={loading}
                   onPress={handleSubmit}

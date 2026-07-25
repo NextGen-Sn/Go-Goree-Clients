@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, router } from "expo-router";
 import * as LocalAuthentication from "expo-local-authentication";
+import { useTranslation } from "react-i18next";
 import { colors } from "@/constants/theme";
 import { PillButton } from "@/components/ui/PillButton";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,12 +20,17 @@ type LockState = "idle" | "unlocked" | "locked";
  * La session Sanctum est persistée dans le SecureStore : on ne retape son mot de
  * passe que si elle a expiré ou après une déconnexion explicite.
  */
-type Biometric = { icon: keyof typeof Ionicons.glyphMap; label: string };
+type Biometric = {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  key: "default" | "facial" | "fingerprint";
+};
 
 // Par défaut "biométrie" tant qu'on n'a pas détecté le matériel réel de l'appareil.
-const DEFAULT_BIOMETRIC: Biometric = { icon: "finger-print", label: "biométrie" };
+const DEFAULT_BIOMETRIC: Biometric = { icon: "finger-print", label: "biométrie", key: "default" };
 
 export default function Index() {
+  const { t } = useTranslation();
   const { user, isLoading, logout } = useAuth();
   const [onboardingSeen, setOnboardingSeen] = useState<boolean | null>(null);
   const [lockState, setLockState] = useState<LockState>("idle");
@@ -41,9 +47,9 @@ export default function Index() {
       // Touch ID / empreinte (Android, anciens iPhone), sinon "biométrie".
       const types = await LocalAuthentication.supportedAuthenticationTypesAsync();
       if (types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
-        setBiometric({ icon: "scan-outline", label: "Face ID" });
+        setBiometric({ icon: "scan-outline", label: "Face ID", key: "facial" });
       } else if (types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) {
-        setBiometric({ icon: "finger-print", label: "empreinte" });
+        setBiometric({ icon: "finger-print", label: "empreinte", key: "fingerprint" });
       }
     })();
   }, []);
@@ -61,8 +67,8 @@ export default function Index() {
         return;
       }
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: `Déverrouillez Go Gorée avec ${biometric.label}`,
-        cancelLabel: "Annuler",
+        promptMessage: t("lockScreen.unlockWith", { biometric: t(`biometrics.${biometric.key}`) }),
+        cancelLabel: t("common.cancel"),
       });
       setLockState(result.success ? "unlocked" : "locked");
     } catch {
@@ -116,12 +122,12 @@ export default function Index() {
           resizeMode="contain"
         />
         <Text style={{ fontSize: 20, fontWeight: "800", color: colors.textDark, marginBottom: 6 }}>
-          Bon retour{user.name ? `, ${user.name.split(" ")[0]}` : ""} !
+          {t("lockScreen.welcomeBack", { name: user.name ? `, ${user.name.split(" ")[0]}` : "" })}
         </Text>
         <Text style={{ fontSize: 14, color: colors.textGray, textAlign: "center", marginBottom: 36 }}>
           {lockState === "locked"
-            ? "Authentification annulée. Réessayez pour accéder à votre compte."
-            : "Confirmez votre identité pour continuer."}
+            ? t("lockScreen.authCancelled")
+            : t("lockScreen.confirmIdentity")}
         </Text>
 
         <View
@@ -140,13 +146,13 @@ export default function Index() {
 
         <View style={{ width: "100%", marginBottom: 12 }}>
           <PillButton
-            label={`Déverrouiller avec ${biometric.label}`}
+            label={t("lockScreen.unlockWith", { biometric: t(`biometrics.${biometric.key}`) })}
             variant="gradient"
             loading={unlocking}
             onPress={tryUnlock}
           />
         </View>
-        <PillButton label="Utiliser un autre compte" variant="outline" onPress={switchAccount} />
+        <PillButton label={t("lockScreen.useOtherAccount")} variant="outline" onPress={switchAccount} />
       </View>
     </SafeAreaView>
   );

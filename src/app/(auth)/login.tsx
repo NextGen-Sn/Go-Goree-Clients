@@ -3,6 +3,7 @@ import { View, Text, Pressable, Image, ScrollView, KeyboardAvoidingView, Platfor
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, router } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { colors, gradients } from "@/constants/theme";
 import { TextField } from "@/components/ui/TextField";
 import { PillButton } from "@/components/ui/PillButton";
@@ -12,6 +13,7 @@ import { useRetryCountdown } from "@/hooks/useRetryCountdown";
 import { formatApiError, getRetryAfterSeconds } from "@/utils/apiError";
 
 export default function LoginScreen() {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -71,7 +73,7 @@ export default function LoginScreen() {
                   marginBottom: 20,
                 }}
               >
-                Connexion
+                {t("auth.login")}
               </Text>
 
               <View>
@@ -79,7 +81,7 @@ export default function LoginScreen() {
                   <TextField
                     icon="mail-outline"
                     variant="onBlue"
-                    placeholder="Email"
+                    placeholder={t("auth.email")}
                     autoCapitalize="none"
                     keyboardType="email-address"
                     value={email}
@@ -89,7 +91,7 @@ export default function LoginScreen() {
                 <TextField
                   icon="lock-closed-outline"
                   variant="onBlue"
-                  placeholder="Mot de passe"
+                  placeholder={t("auth.password")}
                   secureTextEntry
                   value={password}
                   onChangeText={setPassword}
@@ -101,7 +103,7 @@ export default function LoginScreen() {
                 style={{ alignSelf: "flex-end", marginTop: 12, marginBottom: 24 }}
               >
                 <Text style={{ fontSize: 13, color: "rgba(255,255,255,0.85)" }}>
-                  Mot de passe oublié ?
+                  {t("auth.forgotPassword")}
                 </Text>
               </Pressable>
 
@@ -110,7 +112,7 @@ export default function LoginScreen() {
               ) : null}
 
               <PillButton
-                label={isBlocked ? `Réessayez dans ${secondsLeft}s` : "Connexion"}
+                label={isBlocked ? t("auth.retryIn", { seconds: secondsLeft }) : t("auth.login")}
                 variant="white"
                 loading={loading}
                 disabled={isBlocked}
@@ -119,15 +121,15 @@ export default function LoginScreen() {
 
               <View style={{ flexDirection: "row", alignItems: "center", marginVertical: 20 }}>
                 <View style={{ flex: 1, height: 1, backgroundColor: "rgba(255,255,255,0.25)" }} />
-                <Text style={{ marginHorizontal: 12, color: "rgba(255,255,255,0.7)" }}>ou</Text>
+                <Text style={{ marginHorizontal: 12, color: "rgba(255,255,255,0.7)" }}>{t("auth.or")}</Text>
                 <View style={{ flex: 1, height: 1, backgroundColor: "rgba(255,255,255,0.25)" }} />
               </View>
 
               <View>
                 <View style={{ marginBottom: 12 }}>
-                  <SocialButton label="Continuer avec Google" icon="logo-google" />
+                  <SocialButton label={t("auth.continueWithGoogle")} icon="logo-google" />
                 </View>
-                <SocialButton label="Continuer avec Apple" icon="logo-apple" />
+                <SocialButton label={t("auth.continueWithApple")} icon="logo-apple" />
               </View>
             </View>
 
@@ -139,12 +141,12 @@ export default function LoginScreen() {
               }}
             >
               <Text style={{ color: "rgba(255,255,255,0.8)" }}>
-                Pas encore de compte ?{" "}
+                {t("auth.noAccount").split("?")[0]}?{" "}
               </Text>
               <Link href="/(auth)/register" asChild>
                 <Pressable>
                   <Text style={{ color: colors.white, fontWeight: "700" }}>
-                    Créer un compte
+                    {t("auth.createAccount")}
                   </Text>
                 </Pressable>
               </Link>

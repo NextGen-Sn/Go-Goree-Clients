@@ -3,10 +3,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import QRCode from "react-native-qrcode-svg";
 import { router, useLocalSearchParams } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { colors } from "@/constants/theme";
 import { useBillet } from "@/hooks/useBillets";
 import { formatFcfa } from "@/constants/trip";
-import { ticketStatusLabel } from "@/utils/ticketStatus";
 import { Ticket } from "@/types";
 
 const STATUS_STYLES: Record<Ticket["status"], { bg: string; text: string }> = {
@@ -16,7 +16,15 @@ const STATUS_STYLES: Record<Ticket["status"], { bg: string; text: string }> = {
   "expiré": { bg: "#FEE2E2", text: "#DC2626" },
 };
 
+const STATUS_TRANSLATION_KEYS: Record<Ticket["status"], string> = {
+  en_attente: "tickets.statusPending",
+  valide: "tickets.statusValid",
+  "utilisé": "tickets.statusUsed",
+  "expiré": "tickets.statusExpired",
+};
+
 export default function TicketDetailScreen() {
+  const { t, i18n } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: ticket, isLoading } = useBillet(id);
 
@@ -35,10 +43,10 @@ export default function TicketDetailScreen() {
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.white }} edges={["top", "bottom"]}>
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
           <Text style={{ fontSize: 15, color: colors.textGray, textAlign: "center" }}>
-            Billet introuvable.
+            {t("ticketDetails.notFound")}
           </Text>
           <Pressable onPress={() => router.back()} style={{ marginTop: 16 }}>
-            <Text style={{ color: colors.primary, fontWeight: "700" }}>Retour</Text>
+            <Text style={{ color: colors.primary, fontWeight: "700" }}>{t("common.back")}</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -62,7 +70,7 @@ export default function TicketDetailScreen() {
           <Ionicons name="chevron-back" size={26} color={colors.textDark} />
         </Pressable>
         <Text style={{ fontSize: 18, fontWeight: "700", color: colors.textDark, marginLeft: 12 }}>
-          Détail du billet
+          {t("ticketDetails.title")}
         </Text>
       </View>
 
@@ -86,7 +94,7 @@ export default function TicketDetailScreen() {
             }}
           >
             <Text style={{ fontSize: 12, fontWeight: "700", color: statusStyle.text }}>
-              {ticketStatusLabel(ticket.status)}
+              {t(STATUS_TRANSLATION_KEYS[ticket.status])}
             </Text>
           </View>
 
@@ -109,7 +117,7 @@ export default function TicketDetailScreen() {
           </View>
 
           <Text style={{ fontSize: 12, color: colors.textGray, marginBottom: 4 }}>
-            N° {ticket.id}
+            {t("ticketDetails.idNumber", { id: ticket.id })}
           </Text>
           <Text style={{ fontSize: 18, fontWeight: "800", color: colors.textDark, marginBottom: 4 }}>
             {ticket.departure} ↔ {ticket.destination}
@@ -119,17 +127,17 @@ export default function TicketDetailScreen() {
 
         <View style={{ width: "100%", marginTop: 20 }}>
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>Passagers</Text>
+            <Text style={styles.rowLabel}>{t("ticketDetails.passengers")}</Text>
             <Text style={styles.rowValue}>{ticket.passengersLabel}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>Montant payé</Text>
+            <Text style={styles.rowLabel}>{t("ticketDetails.amountPaid")}</Text>
             <Text style={styles.rowValue}>{formatFcfa(ticket.total)}</Text>
           </View>
           <View style={[styles.row, { borderBottomWidth: 0 }]}>
-            <Text style={styles.rowLabel}>Acheté le</Text>
+            <Text style={styles.rowLabel}>{t("ticketDetails.purchasedAt")}</Text>
             <Text style={styles.rowValue}>
-              {new Date(ticket.purchasedAt).toLocaleDateString("fr-FR")}
+              {new Date(ticket.purchasedAt).toLocaleDateString(i18n.language)}
             </Text>
           </View>
         </View>

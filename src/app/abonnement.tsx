@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
+import { useTranslation } from "react-i18next";
 import { colors, gradients } from "@/constants/theme";
 import { formatFcfa } from "@/constants/trip";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,11 +24,12 @@ const PAYMENT_OPTIONS: { id: SouscriptionMode; label: string; icon: keyof typeof
 const POLL_MS = 3000;
 const TIMEOUT_MS = 60_000;
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+function formatDate(iso: string, locale: string) {
+  return new Date(iso).toLocaleDateString(locale, { day: "2-digit", month: "long", year: "numeric" });
 }
 
 export default function AbonnementScreen() {
+  const { t, i18n } = useTranslation();
   const { user, refreshUser } = useAuth();
   const { data: plans, isLoading, isError, refetch } = usePlans();
 
@@ -42,8 +44,6 @@ export default function AbonnementScreen() {
   const estResident = user?.estResident ?? false;
   const pendingTimedOut = pendingSince !== null && Date.now() - pendingSince > TIMEOUT_MS;
 
-  // Après un paiement PayDunya, on interroge /me jusqu'à ce que l'abonnement
-  // devienne actif (webhook traité côté backend).
   useEffect(() => {
     if (pendingSince === null || pendingTimedOut) return;
     const interval = setInterval(() => refreshUser(), POLL_MS);
@@ -58,7 +58,6 @@ export default function AbonnementScreen() {
     return () => sub.remove();
   }, [pendingSince, refreshUser]);
 
-  // Abonnement devenu actif : on sort de l'état "en attente".
   useEffect(() => {
     if (pendingSince !== null && abonnementActif) setPendingSince(null);
   }, [abonnementActif, pendingSince]);
@@ -91,12 +90,11 @@ export default function AbonnementScreen() {
         <Ionicons name="chevron-back" size={26} color={colors.textDark} />
       </Pressable>
       <Text style={{ fontSize: 18, fontWeight: "700", color: colors.textDark, marginLeft: 12 }}>
-        Mon abonnement
+        {t("subscription.title")}
       </Text>
     </View>
   );
 
-  // Abonnement actif : carte de statut, pas de souscription.
   if (abonnementActif) {
     const ab = user!.abonnement!;
     return (
@@ -107,19 +105,19 @@ export default function AbonnementScreen() {
             <Ionicons name="ribbon" size={48} color="#16A34A" />
           </View>
           <Text style={{ fontSize: 20, fontWeight: "800", color: colors.textDark, marginBottom: 8 }}>
-            Abonnement actif
+            {t("subscription.active")}
           </Text>
           <Text style={{ fontSize: 14, color: colors.textGray, textAlign: "center", marginBottom: 8 }}>
-            {ab.plan ? ab.plan.nom : "Abonnement résident"}
+            {ab.plan ? ab.plan.nom : t("subscription.active")}
           </Text>
           {ab.dateFin ? (
             <Text style={{ fontSize: 14, color: colors.textDark, textAlign: "center", marginBottom: 24 }}>
-              Valable jusqu'au {formatDate(ab.dateFin)}
+              {t("subscription.expiresOn", { date: formatDate(ab.dateFin, i18n.language) })}
             </Text>
           ) : null}
           <View style={{ backgroundColor: colors.primaryTint, borderRadius: 14, padding: 16 }}>
             <Text style={{ fontSize: 13, color: colors.primary, textAlign: "center", fontWeight: "600" }}>
-              Vos billets sont gratuits sur tous les voyages tant que votre abonnement est actif.
+              {t("subscription.freeTicketsBenefit")}
             </Text>
           </View>
         </View>
@@ -127,7 +125,6 @@ export default function AbonnementScreen() {
     );
   }
 
-  // Non-résident : rediriger vers la demande de carte.
   if (!estResident) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.white }} edges={["top", "bottom"]}>
@@ -137,14 +134,14 @@ export default function AbonnementScreen() {
             <Ionicons name="id-card-outline" size={48} color={colors.primary} />
           </View>
           <Text style={{ fontSize: 20, fontWeight: "800", color: colors.textDark, marginBottom: 8, textAlign: "center" }}>
-            Réservé aux résidents
+            {t("subscription.residentOnlyTitle")}
           </Text>
           <Text style={{ fontSize: 14, color: colors.textGray, textAlign: "center", marginBottom: 28 }}>
-            Les abonnements sont réservés aux résidents de Gorée. Soumettez d'abord votre demande de carte résident.
+            {t("subscription.residentOnlySubtitle")}
           </Text>
           <Pressable onPress={() => router.replace("/demande-carte-resident")} style={{ width: "100%" }}>
             <LinearGradient colors={gradients.primary} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 54, borderRadius: 14, alignItems: "center", justifyContent: "center" }}>
-              <Text style={{ fontSize: 16, fontWeight: "700", color: colors.white }}>Demander la carte résident</Text>
+              <Text style={{ fontSize: 16, fontWeight: "700", color: colors.white }}>{t("subscription.requestCardBtn")}</Text>
             </LinearGradient>
           </Pressable>
         </View>
@@ -152,7 +149,6 @@ export default function AbonnementScreen() {
     );
   }
 
-  // Paiement PayDunya en attente de confirmation.
   if (pendingSince !== null) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.white }} edges={["top", "bottom"]}>
@@ -162,27 +158,26 @@ export default function AbonnementScreen() {
             <Ionicons name="time-outline" size={48} color="#D97706" />
           </View>
           <Text style={{ fontSize: 20, fontWeight: "800", color: colors.textDark, marginBottom: 8, textAlign: "center" }}>
-            {pendingTimedOut ? "Toujours en attente" : "Activation en cours..."}
+            {pendingTimedOut ? t("subscription.pendingActivationTitle_timedOut") : t("subscription.pendingActivationTitle")}
           </Text>
           <Text style={{ fontSize: 14, color: colors.textGray, textAlign: "center", marginBottom: 28 }}>
             {pendingTimedOut
-              ? "La confirmation prend plus de temps que prévu. L'abonnement s'activera dès la validation du paiement."
-              : "Nous confirmons votre paiement avec Paydunya. Votre abonnement sera activé dans un instant."}
+              ? t("subscription.pendingActivationSubtitle_timedOut")
+              : t("subscription.pendingActivationSubtitle")}
           </Text>
           <Pressable onPress={() => refreshUser()} style={{ width: "100%", marginBottom: 12 }}>
             <LinearGradient colors={gradients.primary} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 54, borderRadius: 14, alignItems: "center", justifyContent: "center" }}>
-              <Text style={{ fontSize: 16, fontWeight: "700", color: colors.white }}>Vérifier maintenant</Text>
+              <Text style={{ fontSize: 16, fontWeight: "700", color: colors.white }}>{t("subscription.verifyNow")}</Text>
             </LinearGradient>
           </Pressable>
           <Pressable onPress={() => setPendingSince(null)}>
-            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.textGray }}>Masquer</Text>
+            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.textGray }}>{t("subscription.hide")}</Text>
           </Pressable>
         </View>
       </SafeAreaView>
     );
   }
 
-  // Résident sans abonnement : liste des plans + souscription.
   const selectedPlan = plans?.find((p) => p.id === selectedPlanId) ?? null;
 
   return (
@@ -190,10 +185,10 @@ export default function AbonnementScreen() {
       {header}
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 16 }}>
         <Text style={{ fontSize: 15, fontWeight: "700", color: colors.textDark, marginBottom: 4 }}>
-          Choisissez une formule
+          {t("subscription.choosePlan")}
         </Text>
         <Text style={{ fontSize: 12, color: colors.textGray, marginBottom: 16 }}>
-          Un abonnement actif rend vos billets gratuits sur tous les voyages.
+          {t("subscription.activePlanBenefit")}
         </Text>
 
         {isLoading ? (
@@ -203,7 +198,7 @@ export default function AbonnementScreen() {
         ) : isError ? (
           <Pressable onPress={() => refetch()} style={{ paddingVertical: 16 }}>
             <Text style={{ fontSize: 14, color: colors.primary, fontWeight: "700" }}>
-              Impossible de charger les formules. Réessayer.
+              {t("subscription.errorLoadingPlans")}
             </Text>
           </Pressable>
         ) : (
@@ -227,7 +222,7 @@ export default function AbonnementScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 15, fontWeight: "700", color: colors.textDark }}>{plan.nom}</Text>
                   <Text style={{ fontSize: 12, color: colors.textGray, marginTop: 2 }}>
-                    {plan.duree_mois} mois
+                    {t("subscription.months", { count: plan.duree_mois })}
                   </Text>
                 </View>
                 <Text style={{ fontSize: 16, fontWeight: "800", color: colors.primary, marginRight: 12 }}>
@@ -244,10 +239,11 @@ export default function AbonnementScreen() {
         {selectedPlan ? (
           <>
             <Text style={{ fontSize: 15, fontWeight: "700", color: colors.textDark, marginTop: 12, marginBottom: 12 }}>
-              Mode de paiement
+              {t("subscription.paymentMethod")}
             </Text>
             {PAYMENT_OPTIONS.map((opt) => {
               const selected = mode === opt.id;
+              const paymentLabel = opt.id === "PORTEFEUILLE" ? t("subscription.walletPay") : opt.label;
               return (
                 <Pressable
                   key={opt.id}
@@ -264,7 +260,7 @@ export default function AbonnementScreen() {
                   }}
                 >
                   <Ionicons name={opt.icon} size={20} color={colors.primary} style={{ marginRight: 12 }} />
-                  <Text style={{ flex: 1, fontSize: 15, fontWeight: "600", color: colors.textDark }}>{opt.label}</Text>
+                  <Text style={{ flex: 1, fontSize: 15, fontWeight: "600", color: colors.textDark }}>{paymentLabel}</Text>
                   <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: selected ? colors.primary : colors.border, alignItems: "center", justifyContent: "center" }}>
                     {selected && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary }} />}
                   </View>
@@ -287,10 +283,10 @@ export default function AbonnementScreen() {
           >
             <Text style={{ fontSize: 16, fontWeight: "700", color: colors.white }}>
               {submitting
-                ? "Traitement…"
+                ? t("subscription.processing")
                 : selectedPlan
-                  ? `Souscrire — ${formatFcfa(Number(selectedPlan.prix))}`
-                  : "Choisir une formule"}
+                  ? t("subscription.subscribeWithPrice", { price: formatFcfa(Number(selectedPlan.prix)) })
+                  : t("subscription.choosePlanPlaceholder")}
             </Text>
           </LinearGradient>
         </Pressable>

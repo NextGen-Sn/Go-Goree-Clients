@@ -13,6 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as WebBrowser from "expo-web-browser";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { colors, gradients } from "@/constants/theme";
 import { usePortefeuille, useMouvements, MOUVEMENTS_QUERY_KEY } from "@/hooks/usePortefeuille";
 import { portefeuilleService, RechargeMode } from "@/services/portefeuille.service";
@@ -36,32 +37,26 @@ type PendingRecharge = {
   startedAt: number;
 };
 
-const TRANSACTION_LABELS: Record<string, string> = {
-  ACHAT_BILLET: "Achat de billet",
-  RECHARGE_PORTEFEUILLE: "Rechargement",
-  ABONNEMENT: "Abonnement résident",
-};
-
-function mouvementLabel(m: MouvementPortefeuille): string {
-  if (m.type_transaction && TRANSACTION_LABELS[m.type_transaction]) {
-    return TRANSACTION_LABELS[m.type_transaction];
-  }
-  return m.type === "RECHARGE" ? "Rechargement" : "Débit";
-}
-
-function formatMouvementDate(iso: string): string {
+function formatMouvementDate(iso: string, t: any, locale: string): string {
   const date = new Date(iso);
   const now = new Date();
-  const time = date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-  if (date.toDateString() === now.toDateString()) return `Aujourd'hui, ${time}`;
-  return `${date.toLocaleDateString("fr-FR")}, ${time}`;
+  const time = date.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+  if (date.toDateString() === now.toDateString()) {
+    return t("wallet.dateToday", { time });
+  }
+  return `${date.toLocaleDateString(locale)}, ${time}`;
 }
 
 function MouvementRow({ mouvement, last }: { mouvement: MouvementPortefeuille; last: boolean }) {
+  const { t, i18n } = useTranslation();
   const isRecharge = mouvement.type === "RECHARGE";
   const isPending = mouvement.statut === "EN_ATTENTE";
   const isRejected = mouvement.statut === "REJETE";
   const amount = Number(mouvement.montant);
+
+  const label = mouvement.type_transaction
+    ? t(`wallet.transactionType_${mouvement.type_transaction}`, { defaultValue: mouvement.type_transaction })
+    : (isRecharge ? t("wallet.transactionType_RECHARGE_PORTEFEUILLE") : t("wallet.transactionType_DEBIT"));
 
   return (
     <View
@@ -92,12 +87,16 @@ function MouvementRow({ mouvement, last }: { mouvement: MouvementPortefeuille; l
       </View>
       <View style={{ flex: 1, marginRight: 12 }}>
         <Text style={{ fontSize: 14, fontWeight: "600", color: colors.textDark }}>
-          {mouvementLabel(mouvement)}
+          {label}
         </Text>
         <Text style={{ fontSize: 12, color: colors.textGray, marginTop: 2 }}>
           {mouvement.mode ? `${mouvement.mode} • ` : ""}
-          {formatMouvementDate(mouvement.created_at)}
-          {isPending ? " • En attente" : isRejected ? " • Rejeté" : ""}
+          {formatMouvementDate(mouvement.created_at, t, i18n.language)}
+          {isPending
+            ? ` • ${t("wallet.transactionStatus_pending")}`
+            : isRejected
+            ? ` • ${t("wallet.transactionStatus_rejected")}`
+            : ""}
         </Text>
       </View>
       <Text
@@ -116,6 +115,7 @@ function MouvementRow({ mouvement, last }: { mouvement: MouvementPortefeuille; l
 }
 
 export default function WalletScreen() {
+  const { t } = useTranslation();
   const { data: portefeuille, isLoading, isError, refetch, isRefetching } = usePortefeuille();
   const { data: mouvements, isLoading: mouvementsLoading } = useMouvements();
   const queryClient = useQueryClient();
@@ -130,13 +130,10 @@ export default function WalletScreen() {
   const balance = portefeuille ? Number(portefeuille.solde) : null;
   const pendingTimedOut = pending !== null && Date.now() - pending.startedAt > RECHARGE_TIMEOUT_MS;
 
-  // La recharge n'est créditée que lorsque le webhook Paydunya est traité côté
-  // backend : on observe le solde jusqu'à ce qu'il bouge.
   useEffect(() => {
     if (!pending || pendingTimedOut) return;
     const interval = setInterval(() => refetch(), RECHARGE_POLL_MS);
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pending, pendingTimedOut]);
 
   useEffect(() => {
@@ -145,19 +142,16 @@ export default function WalletScreen() {
       if (state === "active") refetch();
     });
     return () => sub.remove();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pending]);
 
   useEffect(() => {
     if (pending && balance !== null && balance !== pending.previousSolde) {
       setPending(null);
       setJustCredited(true);
-      // Un nouveau mouvement (recharge) est apparu : on rafraîchit l'historique.
       queryClient.invalidateQueries({ queryKey: MOUVEMENTS_QUERY_KEY });
       const timer = setTimeout(() => setJustCredited(false), 6000);
       return () => clearTimeout(timer);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [balance, pending]);
 
   function refreshAll() {
@@ -202,7 +196,7 @@ export default function WalletScreen() {
         <SafeAreaView edges={["top"]}>
           <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 24 }}>
             <Text style={{ fontSize: 20, fontWeight: "800", color: colors.white, marginBottom: 20 }}>
-              Mon portefeuille
+              {t("wallet.title")}
             </Text>
 
             <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
@@ -215,7 +209,7 @@ export default function WalletScreen() {
                   marginRight: 8,
                 }}
               >
-                SOLDE DISPONIBLE
+                {t("wallet.availableBalance")}
               </Text>
               <Pressable onPress={() => setBalanceHidden((v) => !v)} hitSlop={8}>
                 <Ionicons
@@ -253,7 +247,7 @@ export default function WalletScreen() {
               >
                 <Ionicons name="add" size={18} color={colors.white} style={{ marginRight: 6 }} />
                 <Text style={{ fontSize: 15, fontWeight: "700", color: colors.white }}>
-                  Recharger
+                  {t("wallet.recharge")}
                 </Text>
               </View>
             </Pressable>
@@ -280,7 +274,7 @@ export default function WalletScreen() {
           >
             <Ionicons name="alert-circle" size={20} color="#DC2626" style={{ marginRight: 10 }} />
             <Text style={{ flex: 1, fontSize: 13, color: "#991B1B" }}>
-              Impossible de charger votre portefeuille. Tirez pour réessayer.
+              {t("wallet.errorLoading")}
             </Text>
           </View>
         ) : null}
@@ -316,13 +310,11 @@ export default function WalletScreen() {
             <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
               <Ionicons name="time-outline" size={20} color="#D97706" style={{ marginRight: 10 }} />
               <Text style={{ flex: 1, fontSize: 13, fontWeight: "700", color: "#92400E" }}>
-                {pendingTimedOut ? "Recharge toujours en attente" : "Recharge en cours de confirmation..."}
+                {pendingTimedOut ? t("wallet.pendingRechargeTitle_timedOut") : t("wallet.pendingRechargeTitle")}
               </Text>
             </View>
             <Text style={{ fontSize: 12, color: "#92400E", marginBottom: 10 }}>
-              {pendingTimedOut
-                ? "Le paiement n'a pas encore été confirmé. Le solde sera crédité dès sa validation."
-                : "Votre solde sera mis à jour dès que Paydunya aura confirmé le paiement."}
+              {pendingTimedOut ? t("wallet.pendingRechargeSubtitle_timedOut") : t("wallet.pendingRechargeSubtitle")}
             </Text>
             <View style={{ flexDirection: "row" }}>
               <Pressable
@@ -338,7 +330,7 @@ export default function WalletScreen() {
                 }}
               >
                 <Text style={{ fontSize: 12, fontWeight: "700", color: colors.white }}>
-                  Vérifier maintenant
+                  {t("wallet.verifyNow")}
                 </Text>
               </Pressable>
               <Pressable
@@ -351,7 +343,7 @@ export default function WalletScreen() {
                   justifyContent: "center",
                 }}
               >
-                <Text style={{ fontSize: 12, fontWeight: "700", color: "#92400E" }}>Masquer</Text>
+                <Text style={{ fontSize: 12, fontWeight: "700", color: "#92400E" }}>{t("wallet.hide")}</Text>
               </Pressable>
             </View>
           </View>
@@ -370,13 +362,13 @@ export default function WalletScreen() {
           >
             <Ionicons name="checkmark-circle" size={20} color="#16A34A" style={{ marginRight: 10 }} />
             <Text style={{ flex: 1, fontSize: 13, fontWeight: "700", color: "#166534" }}>
-              Recharge créditée !
+              {t("wallet.credited")}
             </Text>
           </View>
         ) : null}
 
         <Text style={{ fontSize: 14, fontWeight: "700", color: colors.textDark, marginBottom: 12 }}>
-          Montants rapides
+          {t("wallet.quickAmounts")}
         </Text>
         <View style={{ flexDirection: "row", flexWrap: "wrap", marginBottom: 24 }}>
           {QUICK_AMOUNTS.map((value) => (
@@ -403,7 +395,7 @@ export default function WalletScreen() {
         </View>
 
         <Text style={{ fontSize: 16, fontWeight: "700", color: colors.textDark, marginBottom: 12 }}>
-          Dernières transactions
+          {t("wallet.recentTransactions")}
         </Text>
         {mouvementsLoading ? (
           <View style={{ paddingVertical: 20, alignItems: "center" }}>
@@ -411,7 +403,7 @@ export default function WalletScreen() {
           </View>
         ) : !mouvements || mouvements.length === 0 ? (
           <Text style={{ fontSize: 14, color: colors.textGray, marginTop: 8 }}>
-            Aucune transaction pour l'instant.
+            {t("wallet.noTransactions")}
           </Text>
         ) : (
           mouvements.map((m, i) => (

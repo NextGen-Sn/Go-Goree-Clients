@@ -3,6 +3,7 @@ import { Modal, View, Text, Image, Pressable, TouchableOpacity, ScrollView, Styl
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useTranslation } from "react-i18next";
 import { colors, gradients } from "@/constants/theme";
 import { formatFcfa } from "@/constants/trip";
 
@@ -23,6 +24,7 @@ interface RechargeModalProps {
 }
 
 export function RechargeModal({ visible, onClose, onConfirm, initialAmount }: RechargeModalProps) {
+  const { t } = useTranslation();
   const [amount, setAmount] = useState<number | null>(initialAmount ?? null);
   const [method, setMethod] = useState<string>("wave");
 
@@ -49,11 +51,11 @@ export function RechargeModal({ visible, onClose, onConfirm, initialAmount }: Re
               <View style={styles.headerIconBadge}>
                 <Ionicons name="wallet" size={18} color={colors.primary} />
               </View>
-              <Text style={styles.headerTitle}>Recharger mon portefeuille</Text>
+              <Text style={styles.headerTitle}>{t("wallet.rechargeModalTitle")}</Text>
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
-              <Text style={styles.sectionLabel}>Montant</Text>
+              <Text style={styles.sectionLabel}>{t("wallet.amountLabel")}</Text>
               <View style={styles.amountGrid}>
                 {AMOUNTS.map((value) => {
                   const isSelected = amount === value;
@@ -72,7 +74,7 @@ export function RechargeModal({ visible, onClose, onConfirm, initialAmount }: Re
                 })}
               </View>
 
-              <Text style={[styles.sectionLabel, { marginTop: 8 }]}>Mode de paiement</Text>
+              <Text style={[styles.sectionLabel, { marginTop: 8 }]}>{t("wallet.paymentMethodLabel")}</Text>
               {METHODS.map((m) => {
                 const isSelected = method === m.id;
                 return (
@@ -101,7 +103,7 @@ export function RechargeModal({ visible, onClose, onConfirm, initialAmount }: Re
                   style={[styles.confirmButton, !amount && { opacity: 0.5 }]}
                 >
                   <Text style={styles.confirmButtonText}>
-                    {amount ? `Recharger ${formatFcfa(amount)}` : "Choisir un montant"}
+                    {amount ? t("wallet.rechargeWithPrice", { price: formatFcfa(amount) }) : t("wallet.chooseAmountPlaceholder")}
                   </Text>
                 </LinearGradient>
               </Pressable>
