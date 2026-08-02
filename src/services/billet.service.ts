@@ -76,7 +76,11 @@ export function mapBilletToTicket(
     if (billet.voyage) {
       // date_voyage arrive en datetime ISO complet dans les réponses billets.
       const day = describeDate(billet.voyage.date_voyage.slice(0, 10)).label;
-      dateLabel = `${day} • ${formatHeureDepart(billet.voyage.trajet.heure_depart)}`;
+      // `trajet` peut être null (trajet supprimé côté admin, ou relation non
+      // chargée) : sans cette précaution, un seul billet abîmé fait échouer le
+      // rendu de toute la liste des billets.
+      const heure = billet.voyage.trajet?.heure_depart;
+      dateLabel = heure ? `${day} • ${formatHeureDepart(heure)}` : day;
     } else {
       dateLabel = "Voyage indisponible";
     }

@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/constants/theme";
-import { describeDate, formatHeureDepart, DateLabel } from "@/utils/date";
+import { describeDate, formatHeureDepart, heureDepartBrute, DateLabel } from "@/utils/date";
 import { useVoyages, UPCOMING_VOYAGES_PARAMS } from "@/hooks/useVoyages";
 import { Voyage, TripSelection } from "@/types/voyage";
 
@@ -48,7 +48,7 @@ export function TripPickerModal({ visible, onClose, onConfirm }: TripPickerModal
     if (!voyages || !selectedDateIso) return [];
     return voyages
       .filter((v) => v.date_voyage === selectedDateIso)
-      .sort((a, b) => a.trajet.heure_depart.localeCompare(b.trajet.heure_depart));
+      .sort((a, b) => heureDepartBrute(a).localeCompare(heureDepartBrute(b)));
   }, [voyages, selectedDateIso]);
 
   const selectedDate = dates.find((d) => d.iso === selectedDateIso) ?? null;
@@ -63,7 +63,7 @@ export function TripPickerModal({ visible, onClose, onConfirm }: TripPickerModal
     onConfirm({
       voyage,
       dateLabel: selectedDate.label,
-      timeLabel: formatHeureDepart(voyage.trajet.heure_depart),
+      timeLabel: formatHeureDepart(voyage.trajet?.heure_depart),
     });
   }
 
@@ -161,7 +161,7 @@ export function TripPickerModal({ visible, onClose, onConfirm }: TripPickerModal
                           <Ionicons name="time-outline" size={18} color={colors.primary} />
                         </View>
                         <Text style={styles.timeLabel}>
-                          {formatHeureDepart(voyage.trajet.heure_depart)}
+                          {formatHeureDepart(voyage.trajet?.heure_depart)}
                         </Text>
                         {isFull ? (
                           <Text style={styles.fullLabel}>Complet</Text>

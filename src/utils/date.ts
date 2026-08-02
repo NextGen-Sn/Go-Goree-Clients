@@ -48,8 +48,21 @@ export function describeDate(iso: string): DateLabel {
 }
 
 /** L'API renvoie l'heure de départ au format "HH:mm:ss" (colonne SQL TIME). */
-export function formatHeureDepart(heureDepart: string): string {
+/**
+ * "14:00:00" -> "14:00".
+ *
+ * Accepte null/undefined : le trajet d'un voyage peut manquer (supprimé côté
+ * admin), et un horaire absent doit s'afficher au lieu de faire échouer le
+ * rendu de l'écran entier.
+ */
+export function formatHeureDepart(heureDepart: string | null | undefined): string {
+  if (!heureDepart) return "—";
   return heureDepart.slice(0, 5);
+}
+
+/** Horaire brut d'un voyage, chaîne vide si le trajet manque — utile pour trier. */
+export function heureDepartBrute(voyage: { trajet: { heure_depart: string } | null }): string {
+  return voyage.trajet?.heure_depart ?? "";
 }
 
 /** Date du jour au format "YYYY-MM-DD", en heure locale (pas d'UTC-shift via toISOString). */

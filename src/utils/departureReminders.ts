@@ -40,11 +40,16 @@ async function ensureAndroidChannel() {
   }
 }
 
-/** Date/heure de départ réelle d'un billet, ou null si le voyage n'est pas chargé. */
+/**
+ * Date/heure de départ réelle d'un billet, ou null si le voyage n'est pas
+ * chargé — ou si son trajet a disparu, auquel cas l'heure est inconnue et
+ * aucun rappel ne peut être calculé.
+ */
 function departureDate(billet: Billet): Date | null {
-  if (!billet.voyage) return null;
+  const heure = billet.voyage?.trajet?.heure_depart;
+  if (!billet.voyage || !heure) return null;
   const [y, m, d] = billet.voyage.date_voyage.slice(0, 10).split("-").map(Number);
-  const [hh, mm] = billet.voyage.trajet.heure_depart.split(":").map(Number);
+  const [hh, mm] = heure.split(":").map(Number);
   return new Date(y, m - 1, d, hh, mm);
 }
 
@@ -82,7 +87,7 @@ export async function syncDepartureReminders(billets: Billet[]): Promise<void> {
       content: {
         title: "Départ imminent 🚤",
         body: `Votre chaloupe Dakar ↔ Gorée part à ${formatHeureDepart(
-          billet.voyage!.trajet.heure_depart
+          billet.voyage?.trajet?.heure_depart
         )}. Rendez-vous à l'embarcadère.`,
       },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: remindAt },
