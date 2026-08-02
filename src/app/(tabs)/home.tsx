@@ -6,7 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { colors, gradients } from "@/constants/theme";
 import { useVoyages, UPCOMING_VOYAGES_PARAMS } from "@/hooks/useVoyages";
-import { formatHeureDepart, todayIso } from "@/utils/date";
+import { formatHeureDepart, heureDepartBrute, todayIso } from "@/utils/date";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function HomeScreen() {
@@ -19,7 +19,7 @@ export default function HomeScreen() {
     return [...voyages].sort((a, b) => {
       const dateCompare = a.date_voyage.localeCompare(b.date_voyage);
       if (dateCompare !== 0) return dateCompare;
-      return a.trajet.heure_depart.localeCompare(b.trajet.heure_depart);
+      return heureDepartBrute(a).localeCompare(heureDepartBrute(b));
     });
   }, [voyages]);
 
@@ -29,7 +29,7 @@ export default function HomeScreen() {
     const today = todayIso();
     return sortedVoyages
       .filter((v) => v.date_voyage === today)
-      .map((v) => formatHeureDepart(v.trajet.heure_depart));
+      .map((v) => formatHeureDepart(v.trajet?.heure_depart));
   }, [sortedVoyages]);
 
   return (
@@ -133,7 +133,7 @@ export default function HomeScreen() {
                   Dakar → Île de Gorée
                 </Text>
                 <Text style={{ fontSize: 16, fontWeight: "700", color: colors.primary }}>
-                  {formatHeureDepart(nextVoyage.trajet.heure_depart)}
+                  {formatHeureDepart(nextVoyage.trajet?.heure_depart)}
                 </Text>
               </View>
 

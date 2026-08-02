@@ -27,8 +27,11 @@ export interface Voyage {
   date_voyage: string; // "YYYY-MM-DD"
   places: number;
   places_restantes: number;
-  trajet: Trajet;
-  chaloupe: Chaloupe;
+  // Nullables : VoyageResource renvoie ces relations telles quelles, et elles
+  // valent null si l'entité a été supprimée côté admin. Les déclarer non
+  // nullables a déjà coûté un plantage de la liste des billets.
+  trajet: Trajet | null;
+  chaloupe: Chaloupe | null;
   created_at: string;
 }
 
