@@ -6,6 +6,7 @@ import { router } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { colors } from "@/constants/theme";
 import { APP_NAME } from "@/constants/config";
+import { LANGUES_DISPONIBLES } from "@/i18n";
 
 function SectionLabel({ children }: { children: string }) {
   return (
@@ -111,24 +112,18 @@ export default function SettingsScreen() {
   const [biometricsEnabled, setBiometricsEnabled] = useState(true);
 
   const handleLanguageChange = () => {
-    Alert.alert(
-      t("settings.appLanguage"),
-      undefined,
-      [
-        {
-          text: "Français",
-          onPress: () => i18n.changeLanguage("fr"),
-        },
-        {
-          text: "English",
-          onPress: () => i18n.changeLanguage("en"),
-        },
-        {
-          text: t("common.cancel"),
-          style: "cancel",
-        },
-      ]
-    );
+    // Construit à partir de LANGUES_DISPONIBLES : ajouter une langue se limite
+    // à déposer son JSON et à l'y déclarer, sans repasser par cet écran.
+    Alert.alert(t("settings.appLanguage"), undefined, [
+      ...LANGUES_DISPONIBLES.map((langue) => ({
+        text: langue.libelle,
+        onPress: () => i18n.changeLanguage(langue.code),
+      })),
+      {
+        text: t("common.cancel"),
+        style: "cancel" as const,
+      },
+    ]);
   };
 
   return (

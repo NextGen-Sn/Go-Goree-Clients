@@ -6,6 +6,7 @@ import { storage } from './utils/storage';
 // Importation des fichiers de traduction JSON
 import fr from './Locales/locales/fr.json';
 import en from './Locales/locales/en.json';
+import es from './Locales/locales/es.json';
 
 // Clé de stockage persistante pour enregistrer le choix de la langue
 const LANGUAGE_KEY = 'user_language';
@@ -14,7 +15,21 @@ const LANGUAGE_KEY = 'user_language';
 const resources = {
   fr: { translation: fr },
   en: { translation: en },
+  es: { translation: es },
 };
+
+/**
+ * Langues proposées à l'utilisateur, dans l'ordre d'affichage.
+ *
+ * Source unique : l'écran Réglages construit son sélecteur à partir d'ici, pour
+ * qu'ajouter une langue se limite à déposer son JSON et à l'ajouter à cette
+ * liste — sans avoir à penser à modifier un écran.
+ */
+export const LANGUES_DISPONIBLES = [
+  { code: 'fr', libelle: 'Français' },
+  { code: 'en', libelle: 'English' },
+  { code: 'es', libelle: 'Español' },
+];
 
 // Détecteur de langue personnalisé (asynchrone)
 const languageDetector = {
