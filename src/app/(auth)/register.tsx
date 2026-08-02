@@ -3,6 +3,7 @@ import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform } fro
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Link, router } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { colors } from "@/constants/theme";
 import { TextField } from "@/components/ui/TextField";
 import { PillButton } from "@/components/ui/PillButton";
@@ -11,6 +12,7 @@ import { useRetryCountdown } from "@/hooks/useRetryCountdown";
 import { formatApiError, getRetryAfterSeconds } from "@/utils/apiError";
 
 export default function RegisterScreen() {
+  const { t } = useTranslation();
   const { register } = useAuth();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -24,12 +26,11 @@ export default function RegisterScreen() {
 
   async function handleSubmit() {
     if (password !== confirmPassword) {
-      setError("Les mots de passe ne correspondent pas");
+      setError(t("auth.passwordsMustMatch"));
       return;
     }
-    // Le backend exige un mot de passe d'au moins 8 caractères (RegisterRequest).
     if (password.length < 8) {
-      setError("Le mot de passe doit contenir au moins 8 caractères");
+      setError(t("auth.passwordMinLength"));
       return;
     }
     setError(null);
@@ -70,12 +71,12 @@ export default function RegisterScreen() {
           </Pressable>
 
           <Text style={{ fontSize: 24, fontWeight: "800", color: colors.textDark, marginBottom: 24 }}>
-            Créer un compte
+            {t("auth.createAccount")}
           </Text>
 
           <View>
             <View style={{ marginBottom: 18 }}>
-              <Text style={styles.label}>Nom</Text>
+              <Text style={styles.label}>{t("auth.lastName")}</Text>
               <TextField
                 icon="person-outline"
                 placeholder="Sow"
@@ -85,7 +86,7 @@ export default function RegisterScreen() {
             </View>
 
             <View style={{ marginBottom: 18 }}>
-              <Text style={styles.label}>Prénom</Text>
+              <Text style={styles.label}>{t("auth.firstName")}</Text>
               <TextField
                 icon="person-outline"
                 placeholder="Boubacar"
@@ -95,7 +96,7 @@ export default function RegisterScreen() {
             </View>
 
             <View style={{ marginBottom: 18 }}>
-              <Text style={styles.label}>Téléphone</Text>
+              <Text style={styles.label}>{t("auth.phone")}</Text>
               <TextField
                 icon="call-outline"
                 placeholder="+221"
@@ -106,7 +107,7 @@ export default function RegisterScreen() {
             </View>
 
             <View style={{ marginBottom: 18 }}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={styles.label}>{t("auth.email")}</Text>
               <TextField
                 icon="mail-outline"
                 placeholder="boubacar@example.com"
@@ -118,7 +119,7 @@ export default function RegisterScreen() {
             </View>
 
             <View style={{ marginBottom: 18 }}>
-              <Text style={styles.label}>Mot de passe</Text>
+              <Text style={styles.label}>{t("auth.password")}</Text>
               <TextField
                 icon="lock-closed-outline"
                 placeholder="········"
@@ -129,7 +130,7 @@ export default function RegisterScreen() {
             </View>
 
             <View>
-              <Text style={styles.label}>Confirmer mot de passe</Text>
+              <Text style={styles.label}>{t("auth.confirmPassword")}</Text>
               <TextField
                 icon="lock-closed-outline"
                 placeholder="········"
@@ -146,7 +147,7 @@ export default function RegisterScreen() {
 
           <View style={{ marginTop: 28 }}>
             <PillButton
-              label={isBlocked ? `Réessayez dans ${secondsLeft}s` : "Créer mon compte"}
+              label={isBlocked ? t("auth.retryIn", { seconds: secondsLeft }) : t("auth.registerButton")}
               variant="gradient"
               loading={loading}
               disabled={isBlocked}
@@ -155,10 +156,10 @@ export default function RegisterScreen() {
           </View>
 
           <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 20 }}>
-            <Text style={{ color: colors.textGray }}>Déjà un compte ? </Text>
+            <Text style={{ color: colors.textGray }}>{t("auth.hasAccount").split("?")[0]}? </Text>
             <Link href="/(auth)/login" asChild>
               <Pressable>
-                <Text style={{ color: colors.primary, fontWeight: "700" }}>Se connecter</Text>
+                <Text style={{ color: colors.primary, fontWeight: "700" }}>{t("auth.login")}</Text>
               </Pressable>
             </Link>
           </View>

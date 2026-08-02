@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { colors, gradients } from "@/constants/theme";
 import { TextField } from "@/components/ui/TextField";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,12 +17,12 @@ import { DemandeResidence } from "@/types/resident";
 
 const STATUT_META: Record<
   DemandeResidence["statut"],
-  { icon: keyof typeof Ionicons.glyphMap; color: string; bg: string; label: string }
+  { icon: keyof typeof Ionicons.glyphMap; color: string; bg: string; labelKey: string }
 > = {
-  EN_COURS: { icon: "time", color: "#D97706", bg: "#FEF3C7", label: "En cours d'examen" },
-  ACCEPTEE: { icon: "checkmark-circle", color: "#16A34A", bg: "#DCFCE7", label: "Acceptée" },
-  REFUSEE: { icon: "close-circle", color: "#DC2626", bg: "#FEE2E2", label: "Refusée" },
-  ANNULEE: { icon: "ban", color: colors.textGray, bg: colors.inputBg, label: "Annulée" },
+  EN_COURS: { icon: "time", color: "#D97706", bg: "#FEF3C7", labelKey: "resident.statusExam" },
+  ACCEPTEE: { icon: "checkmark-circle", color: "#16A34A", bg: "#DCFCE7", labelKey: "resident.statusApproved" },
+  REFUSEE: { icon: "close-circle", color: "#DC2626", bg: "#FEE2E2", labelKey: "resident.statusRejected" },
+  ANNULEE: { icon: "ban", color: colors.textGray, bg: colors.inputBg, labelKey: "resident.statusCancelled" },
 };
 
 function DocumentSlot({
@@ -37,6 +38,8 @@ function DocumentSlot({
   allowDocument: boolean;
   onPick: (f: UploadFile) => void;
 }) {
+  const { t } = useTranslation();
+
   async function run(picker: () => Promise<UploadFile | null>) {
     const f = await picker();
     if (f) onPick(f);
@@ -44,12 +47,12 @@ function DocumentSlot({
 
   function openOptions() {
     const buttons: { text: string; onPress?: () => void; style?: "cancel" }[] = [
-      { text: "Prendre une photo", onPress: () => run(pickImageFromCamera) },
-      { text: "Galerie", onPress: () => run(pickImageFromLibrary) },
+      { text: t("resident.pickOptionCamera"), onPress: () => run(pickImageFromCamera) },
+      { text: t("resident.pickOptionLibrary"), onPress: () => run(pickImageFromLibrary) },
     ];
-    if (allowDocument) buttons.push({ text: "Fichier (PDF)", onPress: () => run(pickDocument) });
-    buttons.push({ text: "Annuler", style: "cancel" });
-    Alert.alert(label, "Comment souhaitez-vous ajouter ce document ?", buttons);
+    if (allowDocument) buttons.push({ text: t("resident.pickOptionFile"), onPress: () => run(pickDocument) });
+    buttons.push({ text: t("common.cancel"), style: "cancel" });
+    Alert.alert(label, t("resident.pickPhotoTitle"), buttons);
   }
 
   const isImage = file?.mimeType.startsWith("image/");
@@ -97,6 +100,7 @@ function DocumentSlot({
 }
 
 export default function DemandeCarteResidentScreen() {
+  const { t } = useTranslation();
   const { user, refreshUser } = useAuth();
   const queryClient = useQueryClient();
   const { data: demandes, isLoading } = useDemandesResidence();
@@ -110,7 +114,6 @@ export default function DemandeCarteResidentScreen() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Demande la plus récente (tri par date décroissante).
   const derniereDemande = useMemo(() => {
     if (!demandes || demandes.length === 0) return null;
     return [...demandes].sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
@@ -122,9 +125,9 @@ export default function DemandeCarteResidentScreen() {
 
   async function handleSubmit() {
     setError(null);
-    if (!carteIdentite.trim()) return setError("Le numéro de carte d'identité est requis.");
-    if (!residence.trim()) return setError("L'adresse de résidence est requise.");
-    if (!photo) return setError("La photo d'identité est requise.");
+    if (!carteIdentite.trim()) return setError(t("resident.errorIdCardRequired"));
+    if (!residence.trim()) return setError(t("resident.errorResidenceRequired"));
+    if (!photo) return setError(t("resident.errorPhotoRequired"));
 
     setSubmitting(true);
     try {
@@ -138,7 +141,7 @@ export default function DemandeCarteResidentScreen() {
       });
       await queryClient.invalidateQueries({ queryKey: DEMANDES_RESIDENCE_QUERY_KEY });
       await refreshUser();
-      Alert.alert("Demande envoyée", "Votre demande de carte résident a été soumise avec succès.");
+      Alert.alert(t("resident.successTitle"), t("resident.successMessage"));
     } catch (err) {
       setError(formatApiError(err));
     } finally {
@@ -160,7 +163,7 @@ export default function DemandeCarteResidentScreen() {
         <Ionicons name="chevron-back" size={26} color={colors.textDark} />
       </Pressable>
       <Text style={{ fontSize: 18, fontWeight: "700", color: colors.textDark, marginLeft: 12 }}>
-        Carte résident
+        {t("resident.headerTitle")}
       </Text>
     </View>
   );
@@ -176,7 +179,6 @@ export default function DemandeCarteResidentScreen() {
     );
   }
 
-  // Résident validé OU demande en cours : on n'affiche pas le formulaire.
   if (estAccepte || enCours) {
     const meta = estAccepte ? STATUT_META.ACCEPTEE : STATUT_META.EN_COURS;
     return (
@@ -197,12 +199,12 @@ export default function DemandeCarteResidentScreen() {
             <Ionicons name={meta.icon} size={48} color={meta.color} />
           </View>
           <Text style={{ fontSize: 20, fontWeight: "800", color: colors.textDark, marginBottom: 8, textAlign: "center" }}>
-            {estAccepte ? "Vous êtes résident" : "Demande en cours d'examen"}
+            {estAccepte ? t("resident.isResidentTitle") : t("resident.statusExam")}
           </Text>
           <Text style={{ fontSize: 14, color: colors.textGray, textAlign: "center", marginBottom: 28 }}>
             {estAccepte
-              ? "Votre statut de résident est validé. Souscrivez un abonnement pour voyager gratuitement."
-              : "Votre demande a bien été reçue. Vous serez notifié dès qu'un agent l'aura examinée."}
+              ? t("resident.isResidentSubtitle")
+              : t("resident.pendingSubtitle")}
           </Text>
           {estAccepte && (
             <Pressable onPress={() => router.push("/abonnement")} style={{ width: "100%" }}>
@@ -213,7 +215,7 @@ export default function DemandeCarteResidentScreen() {
                 style={{ height: 54, borderRadius: 14, alignItems: "center", justifyContent: "center" }}
               >
                 <Text style={{ fontSize: 16, fontWeight: "700", color: colors.white }}>
-                  Voir les abonnements
+                  {t("resident.viewSubscriptions")}
                 </Text>
               </LinearGradient>
             </Pressable>
@@ -230,65 +232,65 @@ export default function DemandeCarteResidentScreen() {
         {refusee && derniereDemande?.motif_refus ? (
           <View style={{ backgroundColor: "#FEE2E2", borderRadius: 14, padding: 14, marginBottom: 20 }}>
             <Text style={{ fontSize: 13, fontWeight: "700", color: "#991B1B", marginBottom: 4 }}>
-              Demande précédente refusée
+              {t("resident.previousRejected")}
             </Text>
-            <Text style={{ fontSize: 13, color: "#991B1B" }}>Motif : {derniereDemande.motif_refus}</Text>
+            <Text style={{ fontSize: 13, color: "#991B1B" }}>{t("resident.previousRejectedReason", { reason: derniereDemande.motif_refus })}</Text>
           </View>
         ) : null}
 
         <Text style={{ fontSize: 15, fontWeight: "700", color: colors.textDark, marginBottom: 14 }}>
-          Vos informations
+          {t("resident.yourInfo")}
         </Text>
         <View style={{ marginBottom: 14 }}>
-          <Text style={styles.label}>Numéro de carte d'identité</Text>
+          <Text style={styles.label}>{t("resident.idCardNumber")}</Text>
           <TextField
             icon="card-outline"
-            placeholder="Ex : 1 234 5678 90123"
+            placeholder={t("resident.idCardPlaceholder")}
             value={carteIdentite}
             onChangeText={setCarteIdentite}
           />
         </View>
         <View style={{ marginBottom: 24 }}>
-          <Text style={styles.label}>Adresse de résidence (Gorée)</Text>
+          <Text style={styles.label}>{t("resident.residenceAddress")}</Text>
           <TextField
             icon="home-outline"
-            placeholder="Ex : Gorée Centre, près de..."
+            placeholder={t("resident.residencePlaceholder")}
             value={residence}
             onChangeText={setResidence}
           />
         </View>
 
         <Text style={{ fontSize: 15, fontWeight: "700", color: colors.textDark, marginBottom: 4 }}>
-          Documents
+          {t("resident.documents")}
         </Text>
         <Text style={{ fontSize: 12, color: colors.textGray, marginBottom: 14 }}>
-          Photo d'identité requise. CNI et certificat acceptent aussi les PDF.
+          {t("resident.documentsHint")}
         </Text>
 
         <DocumentSlot
-          label="Photo d'identité"
-          hint="Obligatoire — image"
+          label={t("resident.photoId")}
+          hint={t("resident.photoIdHint")}
           file={photo}
           allowDocument={false}
           onPick={setPhoto}
         />
         <DocumentSlot
-          label="CNI — recto"
-          hint="Image ou PDF"
+          label={t("resident.cniRecto")}
+          hint={t("resident.cniRectoHint")}
           file={cniRecto}
           allowDocument
           onPick={setCniRecto}
         />
         <DocumentSlot
-          label="CNI — verso"
-          hint="Image ou PDF"
+          label={t("resident.cniVerso")}
+          hint={t("resident.cniRectoHint")}
           file={cniVerso}
           allowDocument
           onPick={setCniVerso}
         />
         <DocumentSlot
-          label="Certificat de résidence"
-          hint="Image ou PDF"
+          label={t("resident.certificatResidence")}
+          hint={t("resident.cniRectoHint")}
           file={certificat}
           allowDocument
           onPick={setCertificat}
@@ -306,7 +308,7 @@ export default function DemandeCarteResidentScreen() {
             style={{ height: 54, borderRadius: 14, alignItems: "center", justifyContent: "center", opacity: submitting ? 0.7 : 1 }}
           >
             <Text style={{ fontSize: 16, fontWeight: "700", color: colors.white }}>
-              {submitting ? "Envoi en cours…" : "Soumettre la demande"}
+              {submitting ? t("resident.submitting") : t("resident.submitBtn")}
             </Text>
           </LinearGradient>
         </Pressable>

@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { colors } from "@/constants/theme";
 import { describeDate, formatHeureDepart, heureDepartBrute, DateLabel } from "@/utils/date";
 import { useVoyages, UPCOMING_VOYAGES_PARAMS } from "@/hooks/useVoyages";
@@ -25,6 +26,7 @@ interface TripPickerModalProps {
 type Step = "date" | "time";
 
 export function TripPickerModal({ visible, onClose, onConfirm }: TripPickerModalProps) {
+  const { t } = useTranslation();
   const [step, setStep] = useState<Step>("date");
   const [selectedDateIso, setSelectedDateIso] = useState<string | null>(null);
 
@@ -93,7 +95,7 @@ export function TripPickerModal({ visible, onClose, onConfirm }: TripPickerModal
               )}
               <View>
                 <Text style={styles.headerTitle}>
-                  {step === "date" ? "Choisir une date" : "Choisir un horaire"}
+                  {step === "date" ? t("dashboard.chooseDate") : t("dashboard.chooseTime")}
                 </Text>
                 {step === "time" && selectedDate && (
                   <Text style={styles.headerSubtitle}>{selectedDate.label}</Text>
@@ -105,19 +107,19 @@ export function TripPickerModal({ visible, onClose, onConfirm }: TripPickerModal
               {isLoading ? (
                 <View style={styles.stateBlock}>
                   <ActivityIndicator color={colors.primary} />
-                  <Text style={styles.stateText}>Chargement des voyages...</Text>
+                  <Text style={styles.stateText}>{t("dashboard.loadingTrips")}</Text>
                 </View>
               ) : isError ? (
                 <View style={styles.stateBlock}>
-                  <Text style={styles.stateText}>Impossible de charger les voyages.</Text>
+                  <Text style={styles.stateText}>{t("dashboard.errorLoadingTrips")}</Text>
                   <TouchableOpacity onPress={() => refetch()} style={styles.retryBtn}>
-                    <Text style={styles.retryBtnText}>Réessayer</Text>
+                    <Text style={styles.retryBtnText}>{t("common.retry")}</Text>
                   </TouchableOpacity>
                 </View>
               ) : step === "date" ? (
                 dates.length === 0 ? (
                   <View style={styles.stateBlock}>
-                    <Text style={styles.stateText}>Aucun voyage disponible pour le moment.</Text>
+                    <Text style={styles.stateText}>{t("dashboard.noVoyage")}</Text>
                   </View>
                 ) : (
                   dates.map((date) => (
@@ -164,14 +166,14 @@ export function TripPickerModal({ visible, onClose, onConfirm }: TripPickerModal
                           {formatHeureDepart(voyage.trajet?.heure_depart)}
                         </Text>
                         {isFull ? (
-                          <Text style={styles.fullLabel}>Complet</Text>
+                          <Text style={styles.fullLabel}>{t("dashboard.complet")}</Text>
                         ) : (
                           <View style={styles.seatsBlock}>
                             <View style={styles.seatsRow}>
                               <View style={styles.seatsDot} />
                               <Text style={styles.seatsNum}>{voyage.places_restantes}</Text>
                             </View>
-                            <Text style={styles.seatsLabel}>places</Text>
+                            <Text style={styles.seatsLabel}>{t("dashboard.placesCount")}</Text>
                           </View>
                         )}
                       </TouchableOpacity>

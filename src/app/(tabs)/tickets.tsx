@@ -12,10 +12,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { colors, gradients } from "@/constants/theme";
 import { useBillets } from "@/hooks/useBillets";
 import { formatFcfa } from "@/constants/trip";
-import { ticketStatusLabel } from "@/utils/ticketStatus";
 import { Ticket, TicketStatus } from "@/types";
 
 const VISIBLE_COUNT = 5;
@@ -27,17 +27,25 @@ const STATUS_STYLES: Record<TicketStatus, { bg: string; text: string }> = {
   "expiré": { bg: "#FEE2E2", text: "#DC2626" },
 };
 
+const STATUS_TRANSLATION_KEYS: Record<TicketStatus, string> = {
+  en_attente: "tickets.statusPending",
+  valide: "tickets.statusValid",
+  "utilisé": "tickets.statusUsed",
+  "expiré": "tickets.statusExpired",
+};
+
 type FilterId = "tous" | TicketStatus;
 
-const FILTERS: { id: FilterId; label: string }[] = [
-  { id: "tous", label: "Tous" },
-  { id: "en_attente", label: "En attente" },
-  { id: "valide", label: "Actifs" },
-  { id: "utilisé", label: "Utilisés" },
-  { id: "expiré", label: "Expirés" },
+const FILTERS: { id: FilterId; translationKey: string }[] = [
+  { id: "tous", translationKey: "tickets.filterAll" },
+  { id: "en_attente", translationKey: "tickets.filterPending" },
+  { id: "valide", translationKey: "tickets.filterActive" },
+  { id: "utilisé", translationKey: "tickets.filterUsed" },
+  { id: "expiré", translationKey: "tickets.filterExpired" },
 ];
 
 function TicketCard({ ticket }: { ticket: Ticket }) {
+  const { t } = useTranslation();
   const statusStyle = STATUS_STYLES[ticket.status];
 
   return (
@@ -80,7 +88,7 @@ function TicketCard({ ticket }: { ticket: Ticket }) {
           }}
         >
           <Text style={{ fontSize: 11, fontWeight: "700", color: statusStyle.text }}>
-            {ticketStatusLabel(ticket.status)}
+            {t(STATUS_TRANSLATION_KEYS[ticket.status])}
           </Text>
         </View>
       </View>
@@ -98,7 +106,7 @@ function TicketCard({ ticket }: { ticket: Ticket }) {
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Ionicons name="qr-code-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
           <Text style={{ fontSize: 12, color: colors.primary, fontWeight: "600" }}>
-            Voir le QR code
+            {t("tickets.viewQrCode")}
           </Text>
         </View>
         <Text style={{ fontSize: 14, fontWeight: "800", color: colors.textDark }}>
@@ -110,6 +118,7 @@ function TicketCard({ ticket }: { ticket: Ticket }) {
 }
 
 export default function TicketsScreen() {
+  const { t } = useTranslation();
   const { data: tickets = [], isLoading, isError, refetch, isRefetching } = useBillets();
   const [filter, setFilter] = useState<FilterId>("tous");
   const [showAll, setShowAll] = useState(false);
@@ -134,7 +143,7 @@ export default function TicketsScreen() {
         }}
       >
         <Text style={{ fontSize: 22, fontWeight: "800", color: colors.textDark }}>
-          Mes billets
+          {t("tickets.title")}
         </Text>
         <Pressable onPress={() => router.push("/ticket/new")}>
           <LinearGradient
@@ -186,7 +195,7 @@ export default function TicketsScreen() {
                     color: isActive ? colors.white : colors.textGray,
                   }}
                 >
-                  {f.label}
+                  {t(f.translationKey)}
                 </Text>
               </Pressable>
             );
@@ -201,7 +210,7 @@ export default function TicketsScreen() {
       ) : isError ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
           <Text style={{ fontSize: 15, color: colors.textGray, textAlign: "center", marginBottom: 16 }}>
-            Impossible de charger vos billets.
+            {t("tickets.errorLoading")}
           </Text>
           <Pressable
             onPress={() => refetch()}
@@ -214,7 +223,7 @@ export default function TicketsScreen() {
               justifyContent: "center",
             }}
           >
-            <Text style={{ fontSize: 14, fontWeight: "700", color: colors.primary }}>Réessayer</Text>
+            <Text style={{ fontSize: 14, fontWeight: "700", color: colors.primary }}>{t("common.retry")}</Text>
           </Pressable>
         </View>
       ) : tickets.length === 0 ? (
@@ -233,10 +242,10 @@ export default function TicketsScreen() {
             <Ionicons name="ticket-outline" size={44} color={colors.primary} />
           </View>
           <Text style={{ fontSize: 17, fontWeight: "700", color: colors.textDark, marginBottom: 8 }}>
-            Aucun billet pour l'instant
+            {t("tickets.noTicketsTitle")}
           </Text>
           <Text style={{ fontSize: 14, color: colors.textGray, textAlign: "center", marginBottom: 28 }}>
-            Réservez votre traversée Dakar ↔ Île de Gorée et retrouvez vos billets ici.
+            {t("tickets.noTicketsSubtitle")}
           </Text>
           <Pressable onPress={() => router.push("/ticket/new")} style={{ width: "100%" }}>
             <LinearGradient
@@ -246,7 +255,7 @@ export default function TicketsScreen() {
               style={{ height: 54, borderRadius: 14, alignItems: "center", justifyContent: "center" }}
             >
               <Text style={{ fontSize: 16, fontWeight: "700", color: colors.white }}>
-                Acheter un billet
+                {t("tickets.buyBillet")}
               </Text>
             </LinearGradient>
           </Pressable>
@@ -266,7 +275,7 @@ export default function TicketsScreen() {
           renderItem={({ item }) => <TicketCard ticket={item} />}
           ListEmptyComponent={
             <Text style={{ fontSize: 14, color: colors.textGray, textAlign: "center", marginTop: 20 }}>
-              Aucun billet dans cette catégorie.
+              {t("tickets.noTicketsInCategory")}
             </Text>
           }
           ListFooterComponent={
@@ -283,7 +292,7 @@ export default function TicketsScreen() {
                   }}
                 >
                   <Text style={{ fontSize: 14, fontWeight: "700", color: colors.primary }}>
-                    Voir tout ({filtered.length})
+                    {t("tickets.viewAllCount", { count: filtered.length })}
                   </Text>
                 </View>
               </Pressable>

@@ -1,4 +1,5 @@
 import "../global.css";
+import "../i18n";
 import { Stack } from "expo-router";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";

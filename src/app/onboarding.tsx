@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { colors } from "@/constants/theme";
 import { PillButton } from "@/components/ui/PillButton";
 import { storage } from "@/utils/storage";
@@ -20,8 +21,7 @@ type Slide = {
   key: string;
   bg: "white" | "blue";
   icon: keyof typeof Ionicons.glyphMap;
-  title: string;
-  subtitle: string;
+  translationKey: "slide1" | "slide2" | "slide3";
 };
 
 const slides: Slide[] = [
@@ -29,26 +29,24 @@ const slides: Slide[] = [
     key: "onboarding-1",
     bg: "white",
     icon: "boat",
-    title: "Réservez votre billet",
-    subtitle: "Achetez votre billet où que vous soyez, sans faire la queue.",
+    translationKey: "slide1",
   },
   {
     key: "onboarding-2",
     bg: "blue",
     icon: "qr-code",
-    title: "Embarquez rapidement",
-    subtitle: "Présentez simplement votre QR Code à l'entrée et gagnez du temps.",
+    translationKey: "slide2",
   },
   {
     key: "onboarding-3",
     bg: "white",
     icon: "wallet",
-    title: "Rechargez votre portefeuille",
-    subtitle: "Payez vos billets instantanément via votre wallet sécurisé.",
+    translationKey: "slide3",
   },
 ];
 
 export default function OnboardingScreen() {
+  const { t } = useTranslation();
   const { width } = useWindowDimensions();
   const [index, setIndex] = useState(0);
   const listRef = useRef<FlatList<Slide>>(null);
@@ -96,7 +94,7 @@ export default function OnboardingScreen() {
                 color: isBlue ? colors.white : colors.textGray,
               }}
             >
-              Passer
+              {t("common.skip")}
             </Text>
           </Pressable>
         )}
@@ -141,7 +139,7 @@ export default function OnboardingScreen() {
                 marginBottom: 12,
               }}
             >
-              {item.title}
+              {t(`onboarding.${item.translationKey}.title`)}
             </Text>
             <Text
               style={{
@@ -151,7 +149,7 @@ export default function OnboardingScreen() {
                 color: item.bg === "blue" ? "rgba(255,255,255,0.85)" : colors.textGray,
               }}
             >
-              {item.subtitle}
+              {t(`onboarding.${item.translationKey}.subtitle`)}
             </Text>
           </View>
         )}
@@ -188,7 +186,7 @@ export default function OnboardingScreen() {
         </View>
 
         <PillButton
-          label={isLast ? "Commencer" : "Suivant"}
+          label={isLast ? t("common.start") : t("common.next")}
           variant={isBlue ? "white" : "gradient"}
           onPress={goNext}
         />
@@ -196,3 +194,4 @@ export default function OnboardingScreen() {
     </SafeAreaView>
   );
 }
+

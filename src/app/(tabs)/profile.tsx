@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { colors, gradients } from "@/constants/theme";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -77,6 +78,7 @@ function ProfileRow({
 }
 
 export default function ProfileScreen() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const [darkMode, setDarkMode] = useState(false);
 
@@ -107,7 +109,7 @@ export default function ProfileScreen() {
             </Text>
           </LinearGradient>
           <Text style={{ fontSize: 18, fontWeight: "800", color: colors.textDark }}>
-            {user?.name ?? "Utilisateur"}
+            {user?.name ?? t("profile.defaultUser")}
           </Text>
           {user?.phone ? (
             <Text style={{ fontSize: 13, color: colors.textGray, marginTop: 4 }}>
@@ -121,26 +123,26 @@ export default function ProfileScreen() {
 
         <ProfileRow
           icon="person-outline"
-          label="Demande carte résident"
+          label={t("profile.menuResidentCard")}
           onPress={() => router.push("/demande-carte-resident")}
         />
         <ProfileRow
           icon="ribbon-outline"
-          label="Mon abonnement"
-          value={user?.abonnement?.actif ? "Actif" : undefined}
+          label={t("profile.menuSubscription")}
+          value={user?.abonnement?.actif ? t("profile.active") : undefined}
           onPress={() => router.push("/abonnement")}
         />
-        <ProfileRow icon="create-outline" label="Modifier le profil" />
-        <ProfileRow icon="lock-closed-outline" label="Changer mot de passe" />
+        <ProfileRow icon="create-outline" label={t("profile.menuEditProfile")} />
+        <ProfileRow icon="lock-closed-outline" label={t("profile.menuChangePassword")} />
         <ProfileRow
           icon="globe-outline"
-          label="Langue"
-          value="Français"
+          label={t("profile.menuLanguage")}
+          value={t("profile.menuLanguageValue")}
           onPress={() => router.push("/settings")}
         />
         <ProfileRow
           icon="moon-outline"
-          label="Mode sombre"
+          label={t("profile.menuDarkMode")}
           right={
             <Switch
               value={darkMode}
@@ -150,7 +152,7 @@ export default function ProfileScreen() {
             />
           }
         />
-        <ProfileRow icon="help-circle-outline" label="Centre d'aide" />
+        <ProfileRow icon="help-circle-outline" label={t("profile.menuHelpCenter")} />
 
         <Text
           style={{
@@ -161,21 +163,21 @@ export default function ProfileScreen() {
             marginBottom: 4,
           }}
         >
-          COMPTE
+          {t("profile.sectionAccount")}
         </Text>
         <ProfileRow
           icon="notifications-outline"
-          label="Notifications"
+          label={t("profile.menuNotifications")}
           onPress={() => router.push("/notifications")}
         />
         <ProfileRow
           icon="settings-outline"
-          label="Paramètres"
+          label={t("profile.menuSettings")}
           onPress={() => router.push("/settings")}
         />
         <ProfileRow
           icon="ticket-outline"
-          label="Mes billets"
+          label={t("profile.menuTickets")}
           onPress={() => router.push("/(tabs)/tickets")}
         />
 
@@ -194,7 +196,7 @@ export default function ProfileScreen() {
         >
           <Ionicons name="log-out-outline" size={18} color="#DC2626" style={{ marginRight: 8 }} />
           <Text style={{ fontSize: 15, fontWeight: "700", color: "#DC2626" }}>
-            Se déconnecter
+            {t("profile.logout")}
           </Text>
         </Pressable>
       </ScrollView>
