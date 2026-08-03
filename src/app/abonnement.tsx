@@ -28,6 +28,19 @@ function formatDate(iso: string, locale: string) {
   return new Date(iso).toLocaleDateString(locale, { day: "2-digit", month: "long", year: "numeric" });
 }
 
+/**
+ * Nombre de jours entiers restants avant l'expiration.
+ *
+ * Comparaison de dates calendaires, pas d'horodatages : un abonnement qui
+ * expire ce soir doit afficher « dernier jour », pas « 0 jour » au motif qu'il
+ * reste moins de 24 heures.
+ */
+function joursRestants(iso: string): number {
+  const jour = (d: Date) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  const diff = jour(new Date(iso)) - jour(new Date());
+  return Math.max(0, Math.round(diff / 86_400_000));
+}
+
 export default function AbonnementScreen() {
   const { t, i18n } = useTranslation();
   const { user, refreshUser } = useAuth();
@@ -111,9 +124,26 @@ export default function AbonnementScreen() {
             {ab.plan ? ab.plan.nom : t("subscription.active")}
           </Text>
           {ab.dateFin ? (
-            <Text style={{ fontSize: 14, color: colors.textDark, textAlign: "center", marginBottom: 24 }}>
-              {t("subscription.expiresOn", { date: formatDate(ab.dateFin, i18n.language) })}
-            </Text>
+            <>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "baseline",
+                  justifyContent: "center",
+                  marginBottom: 4,
+                }}
+              >
+                <Text style={{ fontSize: 34, fontWeight: "800", color: "#16A34A" }}>
+                  {joursRestants(ab.dateFin)}
+                </Text>
+                <Text style={{ fontSize: 15, fontWeight: "600", color: colors.textDark, marginLeft: 6 }}>
+                  {t("subscription.daysLeft", { count: joursRestants(ab.dateFin) })}
+                </Text>
+              </View>
+              <Text style={{ fontSize: 13, color: colors.textGray, textAlign: "center", marginBottom: 24 }}>
+                {t("subscription.expiresOn", { date: formatDate(ab.dateFin, i18n.language) })}
+              </Text>
+            </>
           ) : null}
           <View style={{ backgroundColor: colors.primaryTint, borderRadius: 14, padding: 16 }}>
             <Text style={{ fontSize: 13, color: colors.primary, textAlign: "center", fontWeight: "600" }}>
