@@ -60,6 +60,19 @@ export function formatHeureDepart(heureDepart: string | null | undefined): strin
   return heureDepart.slice(0, 5);
 }
 
+/**
+ * Nombre de jours entiers restants avant une échéance.
+ *
+ * Comparaison de dates calendaires, pas d'horodatages : un abonnement qui
+ * expire ce soir doit afficher son dernier jour, pas « 0 » au motif qu'il reste
+ * moins de vingt-quatre heures.
+ */
+export function joursRestants(iso: string): number {
+  const jour = (d: Date) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  const diff = jour(new Date(iso)) - jour(new Date());
+  return Math.max(0, Math.round(diff / 86_400_000));
+}
+
 /** Horaire brut d'un voyage, chaîne vide si le trajet manque — utile pour trier. */
 export function heureDepartBrute(voyage: { trajet: { heure_depart: string } | null }): string {
   return voyage.trajet?.heure_depart ?? "";
