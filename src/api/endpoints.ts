@@ -34,4 +34,8 @@ export const endpoints = {
   abonnements: {
     souscrire: "/abonnements/souscrire",
   },
+  notifications: {
+    list: "/notifications",
+    detail: (id: string) => `/notifications/${id}`,
+  },
 };

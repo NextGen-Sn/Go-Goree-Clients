@@ -262,5 +262,17 @@
     "menuTickets": "Mes billets",
     "logout": "Se déconnecter",
     "active": "Actif"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "Aucune notification pour l'instant.",
+    "errorLoading": "Impossible de charger vos notifications.",
+    "justNow": "à l'instant",
+    "minutesAgo_one": "il y a {{count}} minute",
+    "minutesAgo_other": "il y a {{count}} minutes",
+    "hoursAgo_one": "il y a {{count}} heure",
+    "hoursAgo_other": "il y a {{count}} heures",
+    "daysAgo_one": "il y a {{count}} jour",
+    "daysAgo_other": "il y a {{count}} jours"
   }
 }
