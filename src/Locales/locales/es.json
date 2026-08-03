@@ -104,6 +104,8 @@
     "active": "Suscripción activa",
     "inactive": "Ninguna suscripción activa",
     "expiresOn": "Caduca el {{date}}",
+    "daysLeft_one": "día restante",
+    "daysLeft_other": "días restantes",
     "plans": "Planes disponibles",
     "payMethod": "Método de pago",
     "walletPay": "Monedero GO GOREE",

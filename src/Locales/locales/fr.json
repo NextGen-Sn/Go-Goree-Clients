@@ -104,6 +104,8 @@
     "active": "Abonnement actif",
     "inactive": "Aucun abonnement actif",
     "expiresOn": "Expire le {{date}}",
+    "daysLeft_one": "jour restant",
+    "daysLeft_other": "jours restants",
     "plans": "Formules disponibles",
     "payMethod": "Mode de paiement",
     "walletPay": "Portefeuille GO GOREE",

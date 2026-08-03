@@ -104,6 +104,8 @@
     "active": "Active subscription",
     "inactive": "No active subscription",
     "expiresOn": "Expires on {{date}}",
+    "daysLeft_one": "day left",
+    "daysLeft_other": "days left",
     "plans": "Available plans",
     "payMethod": "Payment method",
     "walletPay": "GO GOREE Wallet",
