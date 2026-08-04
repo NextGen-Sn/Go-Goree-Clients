@@ -8,6 +8,7 @@ import * as WebBrowser from "expo-web-browser";
 import { useTranslation } from "react-i18next";
 import { colors, gradients } from "@/constants/theme";
 import { formatFcfa } from "@/constants/trip";
+import { joursRestants } from "@/utils/date";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlans } from "@/hooks/usePlans";
 import { abonnementService, SouscriptionMode } from "@/services/abonnement.service";
@@ -28,18 +29,6 @@ function formatDate(iso: string, locale: string) {
   return new Date(iso).toLocaleDateString(locale, { day: "2-digit", month: "long", year: "numeric" });
 }
 
-/**
- * Nombre de jours entiers restants avant l'expiration.
- *
- * Comparaison de dates calendaires, pas d'horodatages : un abonnement qui
- * expire ce soir doit afficher « dernier jour », pas « 0 jour » au motif qu'il
- * reste moins de 24 heures.
- */
-function joursRestants(iso: string): number {
-  const jour = (d: Date) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
-  const diff = jour(new Date(iso)) - jour(new Date());
-  return Math.max(0, Math.round(diff / 86_400_000));
-}
 
 export default function AbonnementScreen() {
   const { t, i18n } = useTranslation();
